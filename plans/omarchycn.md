@@ -87,7 +87,16 @@ omarchy `omarchycn` merges them onto `quattro` and adds what no PR can carry yet
 - [x] T33 Rebuild omarchy-iso as one PR branch on iso #241 and current upstream; `omarchycn` becomes it; omarchy-pkgs follows upstream master
 - [x] T34 Build the local-source ISO and test in QEMU: Chinese offline, English
 - [x] T35 Acceptance checklist for T28–T34
-- [ ] T36 Open the PRs one at a time from Raiden-MeixElysia
+- [x] T36 Open the PRs one at a time from Raiden-MeixElysia
+
+## Open PRs (T36, 2026-10-12, from Raiden-MeixElysia)
+
+- omacom/omarchy#15116 `cjk-variant-selection`: Noto CJK variant fontconfig. Mergeable.
+- omacom/omarchy#15117 `chinese-language`: Simplified Chinese as a system language. Mergeable; rebased onto #15091, which removed USB and Thunderbolt approval and with it their Chinese text.
+- omacom/omarchy-iso#263 `chinese-installer`: language first, CJK console, Chinese installer. Stacked on iso #241, upstream merged in; needs #15117.
+- omacom/omarchy#15118 `cn-developer-mirrors`: stacked on #13690; shows #13690's conflicts until it rebases.
+- omacom/omarchy#15119 `cn-region-switch`: stacked on #15118.
+- Not yet opened: the Chinese wording for Region and China Apps (commit in `omarchycn`), once #15117 and #15119 land.
 
 ## Acceptance checklist for T28–T34 (maintainers' ISO test, 2026-10-11)
 
