@@ -34,6 +34,17 @@ These replace the 2026-10-05 decisions where they disagree.
 - A local-source ISO builds `omarchy-dev` and `omarchy-settings-dev` under the published version number and does not pin them, so the next published release replaces them on `omarchy update`. Local test ISOs are for testing only.
 - `stable-mirror.omarchy.cn`, `rc-mirror.omarchy.cn` and `mirror.omarchy.cn` resolve and serve `core.db` (checked 2026-10-09).
 
+## PR branches (T32, 2026-10-12)
+
+omarchy, each a fork branch:
+
+- `cjk-variant-selection` on upstream `quattro`: the Noto CJK variant fontconfig.
+- `chinese-language` on upstream `quattro`: `omarchy language`, Setup > Language, the installer's language prompt, the Chinese menu overlay, shell and notification text.
+- `cn-developer-mirrors` on #13690: the `cn` developer mirrors at install.
+- `cn-region-switch` on `cn-developer-mirrors`: `omarchy region`, Setup > Region, China Apps, `manual/52-china.md`; English only.
+
+`omarchycn` merges them onto `quattro` and adds what no PR can carry yet: the Chinese wording for Region and China Apps and the language half of the China manual (needs both language and region), and an integration-only pacman resolution until #13690 rebases onto upstream's ARM templates. Known failure there: `pacman-templates-test` expects x86 refresh to copy templates directly, which #13690 replaces with a render.
+
 ## Tasks
 
 - [x] T0 Branches and this list
