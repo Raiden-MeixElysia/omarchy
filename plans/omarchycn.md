@@ -84,7 +84,7 @@ omarchy `omarchycn` merges them onto `quattro` and adds what no PR can carry yet
 - [x] T30 The CJK console skips the second language screen; the summary's keyboard row shows the chosen layout, not its keymap (omarchy-iso)
 - [x] T31 The CJK console fills the screen and the summary keeps the logo in view (omarchy-iso)
 - [x] T32 Rebuild omarchy as PR branches on current upstream: CJK fontconfig, language and menus, shell text, cn developer mirrors (on #13690), Setup > Region and China Apps; `omarchycn` becomes their merge
-- [ ] T33 Rebuild omarchy-iso as one PR branch on iso #241 and current upstream; `omarchycn` becomes it; omarchy-pkgs follows upstream master
+- [x] T33 Rebuild omarchy-iso as one PR branch on iso #241 and current upstream; `omarchycn` becomes it; omarchy-pkgs follows upstream master
 - [ ] T34 Build the local-source ISO and test in QEMU: Chinese offline, English
 - [ ] T35 Acceptance checklist for T28–T34
 - [ ] T36 Open the PRs one at a time from Raiden-MeixElysia
