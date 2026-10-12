@@ -34,7 +34,11 @@ For China, the builder installs `archlinuxcn-keyring` using the existing Arch tr
 
 ## Scope of the China profile
 
-The China profile provides repository defaults only. Language is a separate installer choice, not part of a region: a Chinese speaker outside China keeps global mirrors, and a China install in English still gets the regional ones.
+The China profile provides repository defaults and developer mirrors. Language is a separate installer choice, not part of a region: a Chinese speaker outside China keeps global mirrors, and a China install in English still gets the regional ones.
+
+## Developer mirrors
+
+The `cn` profile also points the common package managers at mirrors inside China: `environment.conf` (npm, PyPI and uv, Go, rustup, Bundler, and Maven through `MAVEN_ARGS`), `cargo.toml` for crates.io, `gemrc` for RubyGems, and `maven-settings.xml`, which Maven reads in place. During installation `install/config/region.sh` links the first three to `/etc/environment.d/90-omarchy-china.conf`, `/.cargo/config.toml` and `/etc/gemrc` when the marker says `cn`. It refuses to replace a regular file it did not create. The environment reaches sessions started after login.
 
 ## Remaining release validation
 

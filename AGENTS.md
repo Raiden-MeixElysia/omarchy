@@ -96,6 +96,11 @@ Exceptions are allowed for migration and package-helper scripts where the helper
 - Do not add `aliases` to new menu entries. Aliases are reserved for
   established alternate names users already type, kept for compatibility.
 
+# Region
+
+- `/etc/omarchy/region` holds the region the installer derived from the timezone (`cn`); no file means Global. The profile lives in `default/regions/cn/`, its contract in `docs/regions.md`.
+- `install/config/region.sh` links the `cn` developer mirrors into `/etc` and `/.cargo` and refuses to replace a regular file it did not create.
+
 # Config Structure
 
 - `config/` - default configs copied to `~/.config/`
