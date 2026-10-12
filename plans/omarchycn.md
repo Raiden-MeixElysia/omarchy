@@ -99,7 +99,7 @@ omarchy `omarchycn` merges them onto `quattro` and adds what no PR can carry yet
 | 4 | No black strip; logo whole on the summary; keyboard row shows Pinyin | Pass | omarchy-iso 411acd6 (`[csd] preferred=none`, `line-height=22px`) and 2c523af (`keyboard_label`); 04-keyboard, 14-summary. |
 | 5 | PRs carry only our changes, stacked on #13690; ISO bundles David's #14433 | Pass | T32/T33 branches; #14433 and iso #237 come from upstream `quattro`; region branches stack on #13690, the ISO branch on iso #241. |
 | - | Rebuilt ISO, Chinese offline and English | Pass | T34 evidence below. |
-| - | Automated tests | No new failures | Per-branch shell tests pass on their bases; the integration suite fails only where upstream fails, plus `pacman-templates-test` until #13690 rebases; ISO unit tests fail only `test_keyboard` (no `localectl`), as upstream. |
+| - | Automated tests | No new failures | Per-branch shell tests pass on their bases; `fontconfig-cjk-test` needs the installed font set and passes in full on the T34 VM (48-fontconfig-test); the integration suite fails only where upstream fails, plus `pacman-templates-test` until #13690 rebases; ISO unit tests fail only `test_keyboard` (no `localectl`), as upstream. |
 
 Open: `pacman-templates-test` and the ARM guard wait on #13690's rebase; the Chinese wording for Region and China Apps waits on the language and region PRs; the upstream menu acceptance test still walks Style > Menu Bar.
 
