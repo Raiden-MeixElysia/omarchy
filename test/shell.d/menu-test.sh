@@ -304,6 +304,14 @@ assert(
     && defaultById['setup.language.zh'].action.includes('omarchy-language zh'),
   'menu offers English and Simplified Chinese under Setup > Language'
 )
+const regionEntries = defaultItems.filter(item => item.parent === 'setup.region')
+assert(
+  regionEntries.map(item => item.label).join('\0') === 'Global\0China'
+    && regionEntries.every(item => item.checked.includes(`== \"${item.label}\"`) && !item.when)
+    && defaultById['setup.region.global'].action.includes('omarchy-region global')
+    && defaultById['setup.region.china'].action.includes('omarchy-region cn'),
+  'menu offers Global and China under Setup > Region'
+)
 // Software you already have keeps its place in Install, dimmed rather than
 // dropped, so the list reads as a catalog of what Omarchy can install.
 // Chromium Account is the sole Install row with anything left to hide for. The
@@ -314,7 +322,8 @@ const windowsGuard = 'omarchy-hw-x86'
 const x86OnlyInstalls = ['install.windows', 'install.browser.edge', 'install.service.dropbox', 'install.service.spotify', 'install.gaming.minecraft', 'install.gaming.heroic']
 assertDeepEqual(
   defaultItems
-    .filter(item => item.id.startsWith('install.') && item.action && item.when)
+    // China Apps rows hide by region, not because the software is there.
+    .filter(item => item.id.startsWith('install.') && item.action && item.when && item.when !== '[[ "$(omarchy-region)" == "China" ]]')
     .map(item => item.id)
     .sort(),
   [...x86OnlyInstalls, 'install.service.chromium-account'].sort(),

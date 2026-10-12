@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# omarchy:summary=Show or switch the region this machine is set up for
+# omarchy:args=[global|cn]
+# omarchy:examples=omarchy region | omarchy region cn
+# omarchy:requires-sudo=true
+
+set -euo pipefail
+
+region_file=/etc/omarchy/region
+
+if (($# == 0)); then
+  if [[ ! -e $region_file ]]; then
+    echo "Global"
+  elif [[ $(<"$region_file") == "cn" ]]; then
+    echo "China"
+  else
+    echo "Unknown region in $region_file: $(<"$region_file")" >&2
+    exit 1
+  fi
+  exit 0
+fi
+
+if [[ $1 != "global" && $1 != "cn" ]]; then
+  echo "Usage: omarchy-region [global|cn]" >&2
+  exit 1
+fi
+
+channel=$(omarchy-version-channel)
+if [[ $channel != "stable" && $channel != "rc" && $channel != "edge" ]]; then
+  echo "Cannot tell this machine's package channel ($channel); run omarchy channel set first" >&2
+  exit 1
+fi
+
+if [[ $1 == "cn" ]]; then
+  # Upgrade first: the keyring install below syncs new databases.
+  omarchy-update-pacman -Syu --noconfirm
+  sudo env OMARCHY_REGION=cn OMARCHY_PATH="$OMARCHY_PATH" bash -e "$OMARCHY_PATH/install/config/region.sh"
+  # Trust ArchLinuxCN before the refresh upgrades through it.
+  rendered=$(mktemp -d)
+  trap 'rm -rf "$rendered"' EXIT
+  omarchy-apply-pacman --render "$channel" "$rendered"
+  mapfile -t profile_packages < <(grep -Ev '^[[:space:]]*(#|$)' "$OMARCHY_PATH/default/regions/cn/packages")
+  sudo pacman --config "$rendered/pacman.conf" -Sy --noconfirm --needed "${profile_packages[@]}"
+  sudo pacman-key --populate archlinuxcn
+  omarchy-refresh-pacman "$channel"
+else
+  sudo env OMARCHY_REGION=global OMARCHY_PATH="$OMARCHY_PATH" bash -e "$OMARCHY_PATH/install/config/region.sh"
+  omarchy-refresh-pacman "$channel"
+fi
+
+# The developer mirrors reach only a new session, so offer one.
+if [[ -t 0 && -t 1 ]] && gum confirm --affirmative "Log out now" --negative "Later" "Log out now to switch the developer mirrors?"; then
+  omarchy-system-logout
+else
+  echo "Log back in to switch the developer mirrors."
+fi

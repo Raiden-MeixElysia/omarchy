@@ -21,8 +21,13 @@ fi
 # rc on aarch64) gets the platform's default channel instead.
 channel=${OMARCHY_MIRROR:-}
 [[ -n $channel && -f $templates/pacman-$channel.conf ]] || channel=$(omarchy_pacman_default_channel "$platform")
-cp -f "$templates/pacman-$channel.conf" /etc/pacman.conf
-cp -f "$templates/mirrorlist-$channel" /etc/pacman.d/mirrorlist
+# Regions render x86 pacman only (omarchy #13690).
+if [[ $platform == x86 ]]; then
+  "$OMARCHY_PATH/bin/omarchy-apply-pacman" "$channel"
+else
+  cp -f "$templates/pacman-$channel.conf" /etc/pacman.conf
+  cp -f "$templates/mirrorlist-$channel" /etc/pacman.d/mirrorlist
+fi
 
 # An image build leaves the keyring to each machine's first boot, so no two
 # share a master key (install/helpers/image-target.sh).

@@ -422,7 +422,8 @@ var GUARD_READERS = [
   "omarchy-hyprland-corners",
   "omarchy-hyprland-window-transparency",
   "omarchy-hyprland-workspace-layout-default",
-  "omarchy-language"
+  "omarchy-language",
+  "omarchy-region"
 ]
 
 // Package and command presence account for most of what the guards ask, and

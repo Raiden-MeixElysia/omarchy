@@ -130,6 +130,13 @@ Exceptions are allowed for migration and package-helper scripts where the helper
 - Chinese menu labels live in `default/omarchy/omarchy-menu.zh-cn.jsonc`, merged when `LANG` starts with `zh_CN`; give a new menu row with translatable words a label there.
 - Shell text goes through `I18n.tr("English %1", arg)` from `qs.Commons`, with its Chinese in `shell/Commons/I18nZh.js` keyed by the English. Notifications and OSD messages are worded by their sender with `omarchy-text "English %1" "$arg"` (Python: `text()`, QML: `I18n.tr`), which reads the same table; the shell shows them as given, so user text is never translated. `test/shell.d/shell-i18n-test.sh` fails on a missing entry.
 
+# Region
+
+- `/etc/omarchy/region` holds the region the installer derived from the timezone (`cn`); no file means Global. The profile lives in `default/regions/cn/`, its contract in `docs/regions.md`.
+- `install/config/region.sh` links the `cn` developer mirrors into `/etc` and `/.cargo` and refuses to replace a regular file it did not create. It serves both the install (the marker) and `omarchy region cn|global` (`OMARCHY_REGION`), which also records or removes the marker; Global removes only the links it made.
+- `omarchy-region` prints the region (`Global` or `China`) and switches it. Nothing in `omarchy update` or migrations may change the region.
+- China-only menu rows carry `"when":"[[ \"$(omarchy-region)\" == \"China\" ]]"` on every row, not only the submenu, because search checks each row's own guard. User-facing docs: `manual/52-china.md`.
+
 # Config Structure
 
 - `config/` - default configs copied to `~/.config/`
