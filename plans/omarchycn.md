@@ -43,7 +43,7 @@ omarchy, each a fork branch:
 - `cn-developer-mirrors` on #13690: the `cn` developer mirrors at install.
 - `cn-region-switch` on `cn-developer-mirrors`: `omarchy region`, Setup > Region, China Apps, `manual/52-china.md`; English only.
 
-`omarchycn` merges them onto `quattro` and adds what no PR can carry yet: the Chinese wording for Region and China Apps and the language half of the China manual (needs both language and region), and an integration-only pacman resolution until #13690 rebases onto upstream's ARM templates. Known failure there: `pacman-templates-test` expects x86 refresh to copy templates directly, which #13690 replaces with a render.
+`omarchycn` merges them onto `quattro` and adds what no PR can carry yet: the Chinese wording for Region and China Apps and the language half of the China manual (needs both language and region), and, until #13690 rebases onto upstream's ARM templates, an integration-only pacman resolution and a guard that refuses `omarchy region cn` off x86. Known failure there: `pacman-templates-test` expects x86 refresh to copy templates directly, which #13690 replaces with a render.
 
 ## Tasks
 

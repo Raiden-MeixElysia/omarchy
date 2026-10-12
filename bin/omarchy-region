@@ -32,6 +32,12 @@ if [[ $channel != "stable" && $channel != "rc" && $channel != "edge" ]]; then
   exit 1
 fi
 
+# The cn profile renders x86 pacman only (omarchy #13690).
+if [[ $1 == "cn" && $(omarchy-hw-platform) != "x86" ]]; then
+  echo "The China region needs an x86 machine; $(omarchy-hw-platform) has no China profile yet" >&2
+  exit 1
+fi
+
 if [[ $1 == "cn" ]]; then
   # Upgrade first: the keyring install below syncs new databases.
   omarchy-update-pacman -Syu --noconfirm

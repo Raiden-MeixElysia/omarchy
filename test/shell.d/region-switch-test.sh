@@ -20,6 +20,7 @@ for command in omarchy-refresh-pacman omarchy-system-logout pacman-key pacman om
 done
 printf '#!/bin/bash\necho "omarchy-update-pacman $*" >>"%s"\n[[ -z ${STUB_UPDATE_FAIL:-} ]]\n' "$calls" >"$test_tmp/bin/omarchy-update-pacman"
 printf '#!/bin/bash\necho "${STUB_CHANNEL:-stable}"\n' >"$test_tmp/bin/omarchy-version-channel"
+printf '#!/bin/bash\necho "${STUB_PLATFORM:-x86}"\n' >"$test_tmp/bin/omarchy-hw-platform"
 printf '#!/bin/bash\n[[ $1 == env ]] && shift\nexec env "$@"\n' >"$test_tmp/bin/sudo"
 printf '#!/bin/bash\necho "gum $*" >>"%s"\nexit "${GUM_ANSWER:-1}"\n' "$calls" >"$test_tmp/bin/gum"
 chmod +x "$test_tmp/bin"/*
@@ -57,6 +58,13 @@ if output=$(STUB_CHANNEL="stable / edge" omarchy-region cn 2>&1); then
 fi
 [[ $(omarchy-region) == "Global" ]] || fail "a refused switch changes nothing"
 pass "an unknown region or an unclear channel is refused"
+
+: >"$calls"
+if output=$(STUB_PLATFORM=aarch64-apple omarchy-region cn 2>&1); then
+  fail "an ARM machine refuses the China region" "$output"
+fi
+[[ $(omarchy-region) == "Global" && ! -s $calls ]] || fail "a refused ARM switch changes nothing" "$(<"$calls")"
+pass "an ARM machine refuses the China region before changing anything"
 
 : >"$calls"
 if output=$(STUB_UPDATE_FAIL=1 omarchy-region cn 2>&1); then
