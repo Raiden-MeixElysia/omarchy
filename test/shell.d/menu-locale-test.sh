@@ -34,7 +34,7 @@ for (const item of defaults) {
   if (item.id !== 'system.lock' && zh && zh.declared.includes('label') && result.label !== zh.label) fail(`${item.id} shows its Chinese label`)
 }
 if (merged['system.lock'].label !== 'Mine') fail('a user extension still overrides the Chinese label')
-if (merged['system.reboot'].label !== '重启' || merged['setup.language'].label !== '语言') fail('Chinese labels reach the merged menu')
+if (merged['system.reboot'].label !== '重启' || merged['setup.language'].label !== '语言' || merged['install.china.wechat'].label !== '微信') fail('Chinese labels reach the merged menu')
 console.log('ok - Chinese labels replace only the label, and user extensions still win')
 JS
 

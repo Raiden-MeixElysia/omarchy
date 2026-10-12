@@ -634,6 +634,8 @@ var table = {
   "Later": "稍后",
   "Log out now to switch the language?": "立即注销以切换语言？",
   "Log back in to switch the language.": "重新登录后切换语言。",
+  "Log out now to switch the developer mirrors?": "立即注销以切换开发工具镜像？",
+  "Log back in to switch the developer mirrors.": "重新登录后切换开发工具镜像。",
   "Superwhisper Dictation Ready": "Superwhisper 语音输入就绪",
   "Hold Right Alt or F9 to dictate (or toggle with Super + Ctrl + X).": "按住右 Alt 或 F9 说话（或用 Super + Ctrl + X 切换）。",
   "Background Intros": "背景开场动画",

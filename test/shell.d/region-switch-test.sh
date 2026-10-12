@@ -10,6 +10,7 @@ trap 'rm -rf "$test_tmp"' EXIT
 root="$test_tmp/root" sandbox="$test_tmp/omarchy" calls="$test_tmp/calls"
 mkdir -p "$root/etc/pacman.d" "$sandbox/bin" "$sandbox/install/config" "$sandbox/default/regions" "$test_tmp/bin" "$test_tmp/home"
 cp -r "$ROOT/default/regions/cn" "$sandbox/default/regions/"
+mkdir -p "$sandbox/shell/Commons" && cp "$ROOT/shell/Commons/I18nZh.js" "$sandbox/shell/Commons/"
 rewrite() { sed -e "s|/etc/|$root/etc/|g" -e "s| /\\.cargo/| $root/.cargo/|g" "$1" >"$2"; chmod +x "$2"; }
 rewrite "$ROOT/install/config/region.sh" "$sandbox/install/config/region.sh"
 rewrite "$ROOT/bin/omarchy-region" "$sandbox/bin/omarchy-region"
@@ -22,6 +23,7 @@ printf '#!/bin/bash\necho "${STUB_CHANNEL:-stable}"\n' >"$test_tmp/bin/omarchy-v
 printf '#!/bin/bash\n[[ $1 == env ]] && shift\nexec env "$@"\n' >"$test_tmp/bin/sudo"
 printf '#!/bin/bash\necho "gum $*" >>"%s"\nexit "${GUM_ANSWER:-1}"\n' "$calls" >"$test_tmp/bin/gum"
 chmod +x "$test_tmp/bin"/*
+ln -s "$ROOT/bin/omarchy-text" "$test_tmp/bin/omarchy-text"
 mkdir -p "$test_tmp/tmp"
 export PATH="$test_tmp/bin:$sandbox/bin:$PATH" OMARCHY_PATH="$sandbox" HOME="$test_tmp/home" TMPDIR="$test_tmp/tmp"
 switch_calls() { sed "s|$test_tmp/tmp/[^/ ]*|RENDERED|g" "$calls"; }
@@ -66,11 +68,13 @@ pass "a failed switch to China leaves the machine Global"
 
 grep -q '^gum' "$calls" && fail "a switch without a terminal asks nothing" "$(<"$calls")"
 : >"$calls"
-output=$(GUM_ANSWER=1 script -qec "omarchy-region cn" /dev/null)
-[[ $output == *"Log back in to switch the developer mirrors."* ]] && ! grep -q '^omarchy-system-logout' "$calls" ||
+output=$(LANG=zh_CN.UTF-8 GUM_ANSWER=1 script -qec "omarchy-region cn" /dev/null)
+grep -qxF 'gum confirm --affirmative 立即注销 --negative 稍后 立即注销以切换开发工具镜像？' "$calls" ||
+  fail "a Chinese session offers to log out in Chinese" "$(<"$calls")"
+[[ $output == *"重新登录后切换开发工具镜像。"* ]] && ! grep -q '^omarchy-system-logout' "$calls" ||
   fail "declining the logout leaves a reminder and the session" "$output"
 : >"$calls"
-GUM_ANSWER=0 script -qec "omarchy-region global" /dev/null >/dev/null
+LANG=en_US.UTF-8 GUM_ANSWER=0 script -qec "omarchy-region global" /dev/null >/dev/null
 grep -qxF 'gum confirm --affirmative Log out now --negative Later Log out now to switch the developer mirrors?' "$calls" &&
   grep -qx 'omarchy-system-logout ' "$calls" || fail "a terminal switch offers to log out and logs out on yes" "$(<"$calls")"
-pass "a switch in a terminal offers to log out"
+pass "a switch in a terminal offers to log out in the session's language"

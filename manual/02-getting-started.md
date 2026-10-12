@@ -22,7 +22,7 @@ The full-disk encryption won't allow you to enter the password from a Bluetooth 
 
 ### Installing in China
 
-The timezone you pick in the installer decides the region: `Asia/Shanghai` brings Chinese package and developer mirrors and the China apps. See [China](52-china.md).
+The installer's first screen asks for your language; pick _Chinese_ for a Chinese installer and system. The timezone you pick later decides the region: `Asia/Shanghai` brings Chinese package and developer mirrors and the China apps. See [China](52-china.md).
 
 ### Installing for another owner
 

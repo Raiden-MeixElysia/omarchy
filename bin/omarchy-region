@@ -50,8 +50,8 @@ else
 fi
 
 # The developer mirrors reach only a new session, so offer one.
-if [[ -t 0 && -t 1 ]] && gum confirm --affirmative "Log out now" --negative "Later" "Log out now to switch the developer mirrors?"; then
+if [[ -t 0 && -t 1 ]] && gum confirm --affirmative "$(omarchy-text "Log out now")" --negative "$(omarchy-text "Later")" "$(omarchy-text "Log out now to switch the developer mirrors?")"; then
   omarchy-system-logout
 else
-  echo "Log back in to switch the developer mirrors."
+  omarchy-text "Log back in to switch the developer mirrors."
 fi
