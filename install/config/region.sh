@@ -4,14 +4,23 @@ cn_links=(
   "gemrc /etc/gemrc"
 )
 
-# The installer writes the marker from the timezone.
+# The installer writes the marker from the timezone; omarchy-region passes the region it switches to.
 region=global
 if [[ -e /etc/omarchy/region ]]; then
   region=$(</etc/omarchy/region)
 fi
+region=${OMARCHY_REGION:-$region}
 
 case $region in
-global) ;;
+global)
+  rm -f /etc/omarchy/region
+  for link in "${cn_links[@]}"; do
+    read -r _ target <<<"$link"
+    if [[ -L $target && $(readlink "$target") == */default/regions/cn/* ]]; then
+      rm "$target"
+    fi
+  done
+  ;;
 cn)
   for link in "${cn_links[@]}"; do
     read -r _ target <<<"$link"
@@ -20,6 +29,8 @@ cn)
       exit 1
     fi
   done
+  mkdir -p /etc/omarchy
+  echo cn >/etc/omarchy/region
   for link in "${cn_links[@]}"; do
     read -r source target <<<"$link"
     mkdir -p "${target%/*}"

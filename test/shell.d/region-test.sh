@@ -43,5 +43,33 @@ fi
 [[ $output == "Unknown region: mars" ]] || fail "region setup names the unknown region" "$output"
 pass "region setup rejects an unknown region"
 
+echo cn >"$root/etc/omarchy/region"
+bash -e "$region_setup"
+OMARCHY_REGION=global bash -e "$region_setup"
+[[ ! -e $root/etc/omarchy/region && -z $(find "$root" -type l) ]] || fail "Global removes the marker and the developer mirror links"
+ln -s /usr/share/somewhere/gemrc "$root/etc/gemrc"
+OMARCHY_REGION=global bash -e "$region_setup"
+[[ -L $root/etc/gemrc ]] || fail "Global keeps a gemrc link Omarchy did not create"
+rm "$root/etc/gemrc"
+pass "switching to Global removes only what Omarchy linked"
+
+OMARCHY_REGION=cn bash -e "$region_setup"
+[[ $(<"$root/etc/omarchy/region") == "cn" && $(readlink "$root/etc/gemrc") == "$ROOT/default/regions/cn/gemrc" ]] ||
+  fail "switching to China records cn and links the drop-ins"
+pass "switching to China records cn and links the drop-ins"
+
+region_bin="$test_tmp/omarchy-region"
+sed "s|/etc/omarchy/region|$root/etc/omarchy/region|" "$ROOT/bin/omarchy-region" >"$region_bin"
+chmod +x "$region_bin"
+[[ $("$region_bin") == "China" ]] || fail "the cn marker reads as China"
+rm "$root/etc/omarchy/region"
+[[ $("$region_bin") == "Global" ]] || fail "no marker reads as Global"
+echo mars >"$root/etc/omarchy/region"
+if output=$("$region_bin" 2>&1); then
+  fail "an unknown marker fails" "$output"
+fi
+[[ $output == "Unknown region in $root/etc/omarchy/region: mars" ]] || fail "the reader names the file and value" "$output"
+pass "omarchy region reads Global, China, and fails on anything else"
+
 grep -qx 'run_logged "$OMARCHY_INSTALL/config/region.sh"' "$ROOT/install/config/all.sh" || fail "the install runs region setup"
 pass "the install runs region setup"

@@ -40,6 +40,8 @@ The China profile provides repository defaults and developer mirrors. Language i
 
 The `cn` profile also points the common package managers at mirrors inside China: `environment.conf` (npm, PyPI and uv, Go, rustup, Bundler, and Maven through `MAVEN_ARGS`), `cargo.toml` for crates.io, `gemrc` for RubyGems, and `maven-settings.xml`, which Maven reads in place. During installation `install/config/region.sh` links the first three to `/etc/environment.d/90-omarchy-china.conf`, `/.cargo/config.toml` and `/etc/gemrc` when the marker says `cn`. It refuses to replace a regular file it did not create. The environment reaches sessions started after login.
 
+`omarchy region cn|global` (_Setup > Region_) switches an installed machine. `cn` upgrades, installs and trusts the profile's keyring through a rendered China config, records the marker and links the developer mirrors through the same script, then refreshes pacman. `global` removes the marker and only the links that point into the profile, then refreshes. The region also shows _Install > China Apps_.
+
 ## Remaining release validation
 
 Unit tests cover region/channel independence, the timezone mapping, generated pacman contents, repeat application, and refresh ordering; refresh itself is exercised only inside the sudo-boundary sandbox. They do not establish live mirror availability, real package trust, or successful offline installation. Before distribution, build from matching local checkouts on an x86_64 builder and run the disposable-VM acceptance workflow in `agents/skills/acceptance-tests.md`.

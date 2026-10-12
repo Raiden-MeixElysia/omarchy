@@ -284,13 +284,22 @@ assert(
   'menu always exposes every supported browser, terminal, and editor under Defaults'
 )
 assert(!defaultById['install.ai.crush'], 'menu removes Crush from Install > AI')
+const regionEntries = defaultItems.filter(item => item.parent === 'setup.region')
+assert(
+  regionEntries.map(item => item.label).join('\0') === 'Global\0China'
+    && regionEntries.every(item => item.checked.includes(`== \"${item.label}\"`) && !item.when)
+    && defaultById['setup.region.global'].action.includes('omarchy-region global')
+    && defaultById['setup.region.china'].action.includes('omarchy-region cn'),
+  'menu offers Global and China under Setup > Region'
+)
 // Software you already have keeps its place in Install, dimmed rather than
 // dropped, so the list reads as a catalog of what Omarchy can install.
 // Chromium Account is the sole Install row with anything left to hide for, so
 // any other `when:` here is a row that went back to vanishing once installed.
 assertDeepEqual(
   defaultItems
-    .filter(item => item.id.startsWith('install.') && item.action && item.when)
+    // China Apps rows hide by region, not because the software is there.
+    .filter(item => item.id.startsWith('install.') && item.action && item.when && item.when !== '[[ "$(omarchy-region)" == "China" ]]')
     .map(item => item.id),
   ['install.service.chromium-account'],
   'menu never hides an Install row because the software is already there'
