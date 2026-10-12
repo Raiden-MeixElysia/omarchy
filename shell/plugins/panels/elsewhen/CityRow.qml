@@ -12,6 +12,16 @@ import "Greetings.js" as Greet
 Rectangle {
   id: row
 
+  // Model.formatDate reads "Tue Oct 6"; a Chinese session reads 10月6日 周二.
+  function dateText(date) {
+    var match = String(date).match(/^(\w{3}) (\w{3}) (\d+)$/)
+    if (!I18n.chinese || !match) return date
+    var month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].indexOf(match[2]) + 1
+    var weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(match[1])
+    if (month < 1 || weekday < 0) return date
+    return month + "月" + match[3] + "日 " + ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][weekday]
+  }
+
   required property var modelData
   required property int index
   // The owning Panel: the row reads its clock, facts and drag state.
@@ -223,7 +233,7 @@ Rectangle {
         Behavior on opacity { NumberAnimation { duration: Style.duration(110) } }
 
         Caption {
-          text: row.ready ? row.rowData.date : "\u2026"
+          text: row.ready ? row.dateText(row.rowData.date) : "\u2026"
           color: row.ready && row.rowData.dayLabel !== "" ? row.dim : row.fainter
         }
 
@@ -234,7 +244,7 @@ Rectangle {
         }
 
         Caption {
-          text: row.ready ? row.rowData.dayLabel : ""
+          text: row.ready ? I18n.trMatch(row.rowData.dayLabel, ["Tomorrow", "Yesterday", "+%1 days", "%1 days"]) : ""
           visible: text !== ""
         }
       }
@@ -301,7 +311,7 @@ Rectangle {
     color: Model.mix(Commons.Color.popups.background, row.foreground, _hot ? 0.24 : 0.14)
     borderSpec: Border.flat(Model.mix(Commons.Color.popups.background, row.foreground, _hot ? 0.65 : 0.35), Style.space(1))
     iconText: "\u00d7"
-    tooltipText: "Remove"
+    tooltipText: I18n.tr("Remove")
     foreground: row.dim
     hoverColor: row.foreground
     fontFamily: row.fontFamily

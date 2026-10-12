@@ -18,6 +18,7 @@ setup_scenario() {
   notify_log="$scenario_dir/notifications"
   journal_log="$scenario_dir/journal"
   mkdir -p "$mock_bin" "$state_dir"
+  ln -s "$ROOT/bin/omarchy-text" "$mock_bin/omarchy-text"
   : >"$notify_log"
   : >"$journal_log"
 

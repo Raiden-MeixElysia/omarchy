@@ -32,4 +32,4 @@ printf 'o.workspace_mode({ default = "%s" })\n' "$1" >"$DEFAULT_FILE"
 
 hyprctl reload >/dev/null
 omarchy-shell -q omarchy.workspaces refresh
-omarchy-notification-send -g 󱂬 "New workspaces use the $LABEL layout"
+omarchy-notification-send -g 󱂬 "$(omarchy-text "New workspaces use the %1 layout" "$LABEL")"

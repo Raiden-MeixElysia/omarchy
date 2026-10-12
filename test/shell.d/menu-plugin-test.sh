@@ -45,6 +45,7 @@ printf 'terminal: %s\n' "$*" >>"$FAKE_CALLS"
 STUB
 
 chmod +x "$STUB_DIR"/*
+ln -s "$ROOT/bin/omarchy-text" "$STUB_DIR/omarchy-text"
 
 # Runs the picker against a plugin list, answering its prompt with $2. Leaves
 # the rows it offered in $ROWS and what it called in $CALLS.

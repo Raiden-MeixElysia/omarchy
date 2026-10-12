@@ -43,17 +43,17 @@ if hyprctl eval "$APPLY" >/dev/null 2>&1; then
 fi
 
 if (( ! APPLIED )); then
-  omarchy-notification-send -g 󱂬 "Workspace layout needs a Hyprland reload"
+  omarchy-notification-send -g 󱂬 "$(omarchy-text "Workspace layout needs a Hyprland reload")"
 elif [[ $NEW_MODE == "$(omarchy-hyprland-workspace-layout-default)" ]] && rm -f "$MODE_FILE"; then
   # Cycled onto the default, a workspace goes back to following it, so a later
   # change of the default reaches it too.
-  omarchy-notification-send -g 󱂬 "Workspace layout set to $NEW_MODE"
+  omarchy-notification-send -g 󱂬 "$(omarchy-text "Workspace layout set to %1" "$NEW_MODE")"
 elif mkdir -p "$MODES_DIR" && printf '%s\n' "$APPLY" >"$MODE_FILE"; then
-  omarchy-notification-send -g 󱂬 "Workspace layout set to $NEW_MODE"
+  omarchy-notification-send -g 󱂬 "$(omarchy-text "Workspace layout set to %1" "$NEW_MODE")"
 else
   # The mode is on screen but nothing will bring it back, and the next press
   # reads the mode from this file, so say so rather than counting it as set.
-  omarchy-notification-send -g 󱂬 "Workspace layout set to $NEW_MODE but could not be saved"
+  omarchy-notification-send -g 󱂬 "$(omarchy-text "Workspace layout set to %1 but could not be saved" "$NEW_MODE")"
 fi
 
 # The bar shows the focused workspace's layout.

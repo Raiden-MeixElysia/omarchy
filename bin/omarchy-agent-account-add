@@ -85,7 +85,7 @@ finish() {
 fail() {
   if [[ $events == "true" ]]; then
     printf '@@omarchy error %s\n' "$1"
-    omarchy-notification-send -g 󰚩 -u critical "Couldn't add the $name account" "$1"
+    omarchy-notification-send -g 󰚩 -u critical "$(omarchy-text "Couldn't add the %1 account" "$name")" "$1"
   else
     echo "$1" >&2
   fi
@@ -113,9 +113,9 @@ interruptible() {
 }
 
 if omarchy-cmd-missing "$provider"; then
-  say "Installing the $name CLI…"
+  say "$(omarchy-text "Installing the %1 CLI…" "$name")"
   if [[ $events == "true" ]]; then
-    mise use -g "$package" >/dev/null 2>&1 || fail "Installing the $name CLI didn't finish."
+    mise use -g "$package" >/dev/null 2>&1 || fail "$(omarchy-text "Installing the %1 CLI didn't finish." "$name")"
   else
     mise use -g "$package" || exit 1
   fi
@@ -150,26 +150,26 @@ if [[ -n $reauth ]]; then
   else
     account_home=$(omarchy-agent-account-state homes "$provider" | awk -F'\t' -v id="$reauth" '$1 == id { print $2 }')
   fi
-  [[ -n $account_home ]] || fail "No $name account named $reauth."
+  [[ -n $account_home ]] || fail "$(omarchy-text "No %1 account named %2." "$name" "$reauth")"
 
   if [[ $account_home == "$HOME/.$provider" ]]; then
-    say "Sign in to $name again in the browser window that opens."
-    login || fail "The $name sign-in didn't finish."
+    say "$(omarchy-text "Sign in to %1 again in the browser window that opens." "$name")"
+    login || fail "$(omarchy-text "The %1 sign-in didn't finish." "$name")"
   else
-    say "Sign in again as this account in the private window that opens."
+    say "$(omarchy-text "Sign in again as this account in the private window that opens.")"
     private_browser
-    interruptible env BROWSER="$browser" "$home_env=$account_home" "${login_command[@]}" || fail "The $name sign-in didn't finish."
+    interruptible env BROWSER="$browser" "$home_env=$account_home" "${login_command[@]}" || fail "$(omarchy-text "The %1 sign-in didn't finish." "$name")"
   fi
 
   omarchy-agent-usage-update --force "$provider" >/dev/null 2>&1 &
-  finish "Signed in to $name again."
+  finish "$(omarchy-text "Signed in to %1 again." "$name")"
   exit 0
 fi
 
 # The first subscription signs in where the CLI always looks, through your
 # normal browser: nothing is signed in there yet that it could be mistaken for.
 if ! primary_signed_in "$provider"; then
-  say "Sign in to $name in the browser window that opens."
+  say "$(omarchy-text "Sign in to %1 in the browser window that opens." "$name")"
   if login && primary_signed_in "$provider"; then
     # The first agent signed in on a machine with none chosen becomes the
     # default, so `omarchy agent` and the panel's starter prompts have one to
@@ -179,9 +179,9 @@ if ! primary_signed_in "$provider"; then
       printf '%s\n' "$provider" >"$HOME/.config/omarchy/defaults/agent"
     fi
     omarchy-agent-usage-update --force "$provider" >/dev/null 2>&1 &
-    finish "Signed in to $name."
+    finish "$(omarchy-text "Signed in to %1." "$name")"
   else
-    fail "The $name sign-in didn't finish."
+    fail "$(omarchy-text "The %1 sign-in didn't finish." "$name")"
   fi
 else
   if [[ -z $label && $events == "false" && -t 0 ]]; then
@@ -189,7 +189,7 @@ else
   fi
 
   if [[ $events == "true" ]]; then
-    say "Sign in as the account you're adding in the private window that opens."
+    say "$(omarchy-text "Sign in as the account you're adding in the private window that opens.")"
   else
     cat <<EOF
 
@@ -201,7 +201,7 @@ Don't log out of the $name CLI to do this: logging out revokes the saved sign-in
 EOF
   fi
 
-  home=$(omarchy-agent-account-state begin "$provider") || fail "Couldn't set up a home for the new account."
+  home=$(omarchy-agent-account-state begin "$provider") || fail "$(omarchy-text "Couldn't set up a home for the new account.")"
 
   private_browser
   interruptible env BROWSER="$browser" "$home_env=$home" "${login_command[@]}"
@@ -211,9 +211,9 @@ EOF
     added=$(jq -r '.label + (if .email != "" then " (" + .email + ")" else "" end)' <<<"$account")
     omarchy-agent-usage-update --force "$provider" >/dev/null 2>&1 &
     if [[ $events == "true" ]]; then
-      finish "Added $added."
+      finish "$(omarchy-text "Added %1." "$added")"
     else
-      finish "Added $added."
+      finish "$(omarchy-text "Added %1." "$added")"
       echo "Switch to it with: omarchy agent account use $provider $(jq -r .id <<<"$account")"
     fi
   else

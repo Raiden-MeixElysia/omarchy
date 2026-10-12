@@ -126,7 +126,7 @@ Item {
 
   function currentLabel() {
     var path = currentPath()
-    if (!path) return filterText ? "No matches" : ""
+    if (!path) return filterText ? I18n.tr("No matches") : ""
 
     return labelForPath(path)
   }

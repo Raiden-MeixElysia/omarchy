@@ -3,7 +3,11 @@
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/base-test.sh"
 
-OMARCHY_PATH="$ROOT" python "$ROOT/test/shell.d/typing-setup-checks.py"
+PATH="$ROOT/bin:$PATH" OMARCHY_PATH="$ROOT" python "$ROOT/test/shell.d/typing-setup-checks.py"
+
+zh=$(cd "$ROOT/default/input-methods" && PATH="$ROOT/bin:$PATH" OMARCHY_PATH="$ROOT" LANG=zh_CN.UTF-8 python -c 'import typing_setup; print(typing_setup.text("Install %1 to use %2", "fcitx5-mozc", "Mozc"))')
+[[ $zh == "安装 fcitx5-mozc 后才能使用 Mozc" ]] || fail "a Chinese session words the input setup errors in Chinese" "$zh"
+pass "a Chinese session words the input setup errors in Chinese"
 
 run_node_test <<'JS'
 const menu = requireFromRoot('shell/plugins/menu/MenuModel.js')

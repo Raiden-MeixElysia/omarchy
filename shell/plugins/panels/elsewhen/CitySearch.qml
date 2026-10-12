@@ -17,9 +17,9 @@ Column {
   // Zone id -> offset text; read inside a binding, so its dependencies track.
   property var offsetLabel: function(zoneId) { return "" }
   property bool loading: false
-  property string buttonText: "+  Add a city"
-  property string placeholderText: "Search cities\u2026"
-  property string loadingText: "Loading zones\u2026"
+  property string buttonText: "+  " + I18n.tr("Add a city")
+  property string placeholderText: I18n.tr("Search cities…")
+  property string loadingText: I18n.tr("Loading zones…")
   property real fontSize: Style.font.bodySmall
   property color foreground: Commons.Color.foreground
   property color dim: Qt.darker(foreground, 1.55)

@@ -31,9 +31,9 @@ active=$(jq -r '.active.label + (if (.active.plan // "") != "" then " (" + .acti
 if [[ $(jq -r .previous.id <<<"$result") == "$(jq -r .active.id <<<"$result")" ]]; then
   echo "New $name sessions already use $active."
 else
-  message="Running sessions stay on $previous."
+  message=$(omarchy-text "Running sessions stay on %1." "$previous")
   echo "New $name sessions now use $active. $message"
-  omarchy-notification-send -g 󰚩 "New $name sessions now use $active" "$message"
+  omarchy-notification-send -g 󰚩 "$(omarchy-text "New %1 sessions now use %2" "$name" "$active")" "$message"
   # The usage record's own limits describe the active account.
   omarchy-agent-usage-update --limits-only "$1" >/dev/null 2>&1 &
 fi

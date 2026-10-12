@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# omarchy:summary=Print an Omarchy message in the session's language, with %1.. filled from the arguments
+# omarchy:args=<english> [args...]
+# omarchy:examples=omarchy-text "Sent to %1" phone
+# omarchy:hidden=true
+
+set -euo pipefail
+
+if (($# < 1)); then
+  echo "Usage: omarchy-text <english> [args...]" >&2
+  exit 1
+fi
+
+text=$1
+shift
+
+# The shell's table is the one source: one JSON-encoded "english": "chinese" pair per line.
+if [[ ${LANG:-} == zh_CN* ]]; then
+  translated=$(grep -E '^  ".*": ".*",?$' "$OMARCHY_PATH/shell/Commons/I18nZh.js" | sed 's/,$//' | paste -sd, |
+    sed 's/^/{/; s/$/}/' | jq -r --arg key "$text" '.[$key] // empty')
+  [[ -z $translated ]] || text=$translated
+fi
+
+# One pass over the template, so an argument that holds %2 is printed as given.
+out=""
+rest=$text
+while [[ $rest =~ ^([^%]*)%(.)(.*)$ ]]; do
+  out+=${BASH_REMATCH[1]}
+  mark=${BASH_REMATCH[2]}
+  rest=${BASH_REMATCH[3]}
+  if [[ $mark == [1-9] ]] && ((mark <= $#)); then
+    out+=${!mark}
+  else
+    out+="%$mark"
+  fi
+done
+printf '%s\n' "$out$rest"

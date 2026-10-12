@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# omarchy:summary=Show or switch the system language between English and Simplified Chinese
+# omarchy:args=[en|zh]
+# omarchy:examples=omarchy language | omarchy language zh
+# omarchy:requires-sudo=true
+
+set -euo pipefail
+
+locale_conf=/etc/locale.conf
+
+if (($# == 0)); then
+  lang=$(sed -n 's/^LANG=//p' "$locale_conf")
+  # locale.conf may quote the value.
+  lang=${lang#[\"\']}
+  printf '%s\n' "${lang%[\"\']}"
+  exit 0
+fi
+
+case ${1:-} in
+en) lang=en_US.UTF-8 ;;
+zh) lang=zh_CN.UTF-8 ;;
+*)
+  echo "Usage: omarchy-language [en|zh]" >&2
+  exit 1
+  ;;
+esac
+
+sudo sed -i "s/^#\(${lang/./\\.} UTF-8\)/\1/" /etc/locale.gen
+sudo locale-gen
+if grep -q '^LANG=' "$locale_conf"; then
+  sudo sed -i "s/^LANG=.*/LANG=$lang/" "$locale_conf"
+else
+  sudo sed -i '$a\' "$locale_conf"
+  echo "LANG=$lang" | sudo tee -a "$locale_conf" >/dev/null
+fi
+
+# The language reaches only a new session, so offer one in the new language.
+prompt=$(LANG=$lang omarchy-text "Log out now to switch the language?")
+log_out=$(LANG=$lang omarchy-text "Log out now")
+later=$(LANG=$lang omarchy-text "Later")
+if [[ -t 0 && -t 1 ]] && gum confirm --affirmative "$log_out" --negative "$later" "$prompt" 2>&1; then
+  omarchy-system-logout
+else
+  LANG=$lang omarchy-text "Log back in to switch the language."
+fi

@@ -28,7 +28,7 @@ rows=$(jq -r --arg icon "$PLUGIN_ICON" \
   ". as \$plugins
    | .[] | select($filter)
    | \$icon + \"\\t\" + .name + \"\\t\" + .id" <<<"$plugins")
-[[ -n $rows ]] || { omarchy-notification-send "No plugin to ${1}"; exit 0; }
+[[ -n $rows ]] || { omarchy-notification-send "$(omarchy-text "No plugin to $1")"; exit 0; }
 
 selection=$(omarchy-menu-select "${1^} plugin" <<<"$rows") || exit 0
 [[ -n $selection ]] || exit 0

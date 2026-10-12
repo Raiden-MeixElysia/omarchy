@@ -22,6 +22,7 @@ import json
 import os
 import re
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import time
@@ -32,6 +33,11 @@ from typing import Any
 
 AGENT_ID = "claude"
 AGENT_NAME = "Claude Code"
+def text(english, *args):
+  """English with %1.. filled, in the session's language, from the shell's table."""
+  return subprocess.run(["omarchy-text", english, *map(str, args)], capture_output=True, text=True, check=True).stdout.rstrip("\n")
+
+
 AUTH_HELP = "Run `claude auth login` to restore authoritative usage."
 USAGE_ENDPOINT = "https://api.anthropic.com/api/oauth/usage"
 PROBE_MIN_INTERVAL_SECONDS = 15
@@ -989,11 +995,12 @@ def probe_limits(access_token: str) -> dict[str, Any]:
   except urllib.error.HTTPError as error:
     retry_after = error.headers.get("retry-after", "") if error.headers else ""
     if error.code == 429:
-      help_text = "Anthropic's usage endpoint is rate limiting checks right now" + (
-        f" (retry after {retry_after}s)" if retry_after else ""
-      ) + ". Local Claude Code stats are still shown."
+      if retry_after:
+        help_text = text("Anthropic's usage endpoint is rate limiting checks right now (retry after %1s). Local Claude Code stats are still shown.", retry_after)
+      else:
+        help_text = text("Anthropic's usage endpoint is rate limiting checks right now. Local Claude Code stats are still shown.")
     else:
-      help_text = f"Anthropic's usage endpoint returned status {error.code}. Local Claude Code stats are still shown."
+      help_text = text("Anthropic's usage endpoint returned status %1. Local Claude Code stats are still shown.", error.code)
     return {"ok": False, "helpText": help_text}
   except Exception:
     # A transport failure reached no server at all — no route, no DNS. Any

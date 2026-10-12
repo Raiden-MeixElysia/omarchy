@@ -40,6 +40,11 @@ run omarchy-hyprland-corners theme
 [[ ! -e $toggles_dir/corners-sharp.lua ]] || fail "theme corners drop the override"
 pass "theme corners drop the override"
 
+LANG=zh_CN.UTF-8 run omarchy-hyprland-corners sharp
+grep -qx 'omarchy-notification-send -g 󰘇 所有主题使用直角' "$tmpdir/commands.log" || fail "a Chinese session announces the corners in Chinese" "$(<"$tmpdir/commands.log")"
+run omarchy-hyprland-corners theme
+pass "a Chinese session announces the corners in Chinese"
+
 if run omarchy-hyprland-corners square 2>/dev/null; then
   fail "unknown corners are refused"
 fi

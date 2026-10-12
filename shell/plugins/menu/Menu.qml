@@ -38,6 +38,7 @@ Item {
 
   function refresh() {
     defaultMenuFile.reload()
+    localeMenuFile.reload()
     userMenuFile.reload()
     return "ok"
   }
@@ -50,7 +51,9 @@ Item {
   // path doesn't have to shell out to bash + jq on every open.
   property string defaultMenuPath: omarchyPath + "/default/omarchy/omarchy-menu.jsonc"
   property string userMenuPath: Quickshell.env("HOME") + "/.config/omarchy/extensions/omarchy-menu.jsonc"
+  property string localeMenuPath: I18n.chinese ? omarchyPath + "/default/omarchy/omarchy-menu.zh-cn.jsonc" : ""
   property var defaultMenuItems: []
+  property var localeMenuItems: []
   property var userMenuItems: []
   property bool opened: false
   property string mode: "menu"
@@ -254,7 +257,7 @@ Item {
   // on a per-key basis (so the user can tweak label/icon/action without
   // re-declaring the whole row).
   function rebuildItemsFromSources() {
-    var mergedMenu = MenuModel.mergeMenuSources(root.defaultMenuItems, root.userMenuItems)
+    var mergedMenu = MenuModel.mergeMenuSources(root.defaultMenuItems, root.localeMenuItems.concat(root.userMenuItems))
     root.providerRevision += 1
     root.providersLoaded = ({})
     root.providerQueue = []
@@ -572,8 +575,8 @@ Item {
     if (root.dmenuMultiple && root.dmenuOnChange.length === 0) {
       displayModel.append({
         itemId: "dmenu.apply", disabled: false, kind: "dmenu", icon: "", iconFont: "",
-        appIcon: "", appId: "", label: "Apply", target: "",
-        detail: root.dmenuSelected.length + " selected", path: "", childCount: 0,
+        appIcon: "", appId: "", label: I18n.tr("Apply"), target: "",
+        detail: I18n.tr("%1 selected", root.dmenuSelected.length), path: "", childCount: 0,
         action: "", provider: "", score: -1, section: ""
       })
     }
@@ -624,7 +627,7 @@ Item {
     for (var i = 0; i < displayModel.count; i++) {
       var row = displayModel.get(i)
       if (row.itemId === "dmenu.apply") {
-        displayModel.setProperty(i, "detail", root.dmenuSelected.length + " selected")
+        displayModel.setProperty(i, "detail", I18n.tr("%1 selected", root.dmenuSelected.length))
       } else if (row.kind === "dmenu") {
         var value = MenuModel.dmenuValue(root.dmenuOptions[Number(row.itemId.substring(6))])
         displayModel.setProperty(i, "icon", root.dmenuSelected.indexOf(value) !== -1 ? "✓" : "○")
@@ -906,7 +909,7 @@ Item {
   function openDmenu(payload) {
     requestSerial += 1
     mode = payload.mode === "input" ? "input" : "select"
-    dmenuPrompt = String(payload.prompt || (mode === "input" ? "Input" : "Select"))
+    dmenuPrompt = String(payload.prompt || (mode === "input" ? I18n.tr("Input") : I18n.tr("Select")))
     dmenuOptions = Array.isArray(payload.options) ? payload.options : []
     dmenuMultiple = mode === "select" && payload.multiple === true
     dmenuOnChange = dmenuMultiple && Array.isArray(payload.onChange)
@@ -1081,6 +1084,16 @@ Item {
     watchChanges: true
     printErrors: false
     onLoaded: { root.defaultMenuItems = root.parseMenuJsonc(text()); root.rebuildItemsFromSources() }
+    onFileChanged: reload()
+  }
+
+  FileView {
+    id: localeMenuFile
+    path: root.localeMenuPath
+    watchChanges: true
+    printErrors: false
+    onLoaded: { root.localeMenuItems = root.parseMenuJsonc(text()); root.rebuildItemsFromSources() }
+    onLoadFailed: { root.localeMenuItems = []; root.rebuildItemsFromSources() }
     onFileChanged: reload()
   }
 
@@ -1279,8 +1292,8 @@ Item {
           anchors.fill: parent
           opened: root.deleteConfirmOpen
           z: 10
-          message: "Do you want to uninstall " + ((root.deleteTarget && root.deleteTarget.label) || "") + "?"
-          confirmText: "Uninstall"
+          message: I18n.tr("Do you want to uninstall %1?", (root.deleteTarget && root.deleteTarget.label) || "")
+          confirmText: I18n.tr("Uninstall")
           background: root.background
           foreground: root.foreground
           scrim: root.scrim
@@ -1312,7 +1325,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: root.filterText || (root.dmenuActive ? (root.dmenuPrompt + "…") : ((root.item(root.activeMenu) ? (root.item(root.activeMenu).title || root.item(root.activeMenu).label) : "Go") + "…"))
+            text: root.filterText || (root.dmenuActive ? (root.dmenuPrompt + "…") : ((root.item(root.activeMenu) ? I18n.tr(root.item(root.activeMenu).title || root.item(root.activeMenu).label) : I18n.tr("Go")) + "…"))
             color: root.foreground
             opacity: root.filterText ? 1 : 0.58
             font.family: root.fontFamily
@@ -1578,7 +1591,7 @@ Item {
 
             Text {
               textFormat: Text.PlainText
-              text: root.filterText ? "No matches for “" + root.filterText + "”" : "Nothing here yet"
+              text: root.filterText ? I18n.tr("No matches for “%1”", root.filterText) : I18n.tr("Nothing here yet")
               color: root.foreground
               opacity: 0.7
               font.family: root.fontFamily

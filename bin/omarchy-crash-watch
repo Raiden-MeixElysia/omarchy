@@ -40,8 +40,8 @@ announce() {
   omarchy-notification-send \
     --urgency critical \
     --glyph "$CRASH_GLYPH" \
-    "Process crashed: $comm" \
-    "Click to diagnose with AI" \
+    "$(omarchy-text "Process crashed: %1" "$comm")" \
+    "$(omarchy-text "Click to diagnose with AI")" \
     --exec omarchy-agent-crash "$pid" "$comm" "$exe" "$signal"
 }
 

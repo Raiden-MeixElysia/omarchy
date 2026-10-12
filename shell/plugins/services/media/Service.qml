@@ -411,7 +411,7 @@ Item {
         handled = true
       }
     } else if (action === "playPause") {
-      actionLabel = player && player.isPlaying ? "Pause" : "Play"
+      actionLabel = player && player.isPlaying ? I18n.tr("Pause") : I18n.tr("Play")
       iconName = player && player.isPlaying ? "media-pause" : "media-play"
       if (player && player.isPlaying && player.canPause) {
         player.pause()

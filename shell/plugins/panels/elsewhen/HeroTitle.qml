@@ -73,7 +73,7 @@ Column {
     anchors.horizontalCenter: parent.horizontalCenter
     spacing: Style.space(9)
 
-    TitleWord { text: "World" }
+    TitleWord { text: I18n.tr("World") }
 
     Item {
       id: heroIcon
@@ -151,7 +151,7 @@ Column {
       }
     }
 
-    TitleWord { text: "Clock" }
+    TitleWord { text: I18n.tr("Clock") }
   }
 
   component TitleWord: Text {

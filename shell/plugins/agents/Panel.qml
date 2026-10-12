@@ -339,9 +339,9 @@ Panel {
 
   // A few ways into making Omarchy your own, handed to the default agent.
   readonly property var starterPrompts: [
-    { glyph: "󰏘", label: "Theme", prompt: "Make me a new Omarchy theme. Ask me what look or inspiration I have in mind, then build it following the Omarchy skill's theming guide and switch to it." },
-    { glyph: "󰐱", label: "Plugin", prompt: "Make me a new Omarchy shell plugin. Ask me what I'd like it to do, then build it following the Omarchy skill's plugin guide and enable it." },
-    { glyph: "󰣆", label: "App", prompt: "Make me a new app for my Omarchy desktop. Ask me what it should do, then build it following the omarchy-app skill and install it so it shows up in the app launcher." }
+    { glyph: "󰏘", label: I18n.tr("Theme"), prompt: "Make me a new Omarchy theme. Ask me what look or inspiration I have in mind, then build it following the Omarchy skill's theming guide and switch to it." },
+    { glyph: "󰐱", label: I18n.tr("Plugin"), prompt: "Make me a new Omarchy shell plugin. Ask me what I'd like it to do, then build it following the Omarchy skill's plugin guide and enable it." },
+    { glyph: "󰣆", label: I18n.tr("App"), prompt: "Make me a new app for my Omarchy desktop. Ask me what it should do, then build it following the omarchy-app skill and install it so it shows up in the app launcher." }
   ]
 
   function startPrompt(prompt) {
@@ -407,7 +407,7 @@ Panel {
     var parts = []
     if (String(account.plan || "") !== "") parts.push(account.plan)
     if (account.resetCredits && Number(account.resetCredits.available) > 0)
-      parts.push(account.resetCredits.available + " free reset" + (Number(account.resetCredits.available) === 1 ? "" : "s"))
+      parts.push(I18n.tr(Number(account.resetCredits.available) === 1 ? "%1 free reset" : "%1 free resets", account.resetCredits.available))
     return parts.join(" · ")
   }
 
@@ -450,10 +450,16 @@ Panel {
   function resetCreditsText(credits) {
     if (!credits || !(Number(credits.available) > 0)) return ""
     var count = Number(credits.available)
-    var text = count + " free reset" + (count === 1 ? "" : "s")
+    var text = I18n.tr(count === 1 ? "%1 free reset" : "%1 free resets", count)
     var expires = new Date(String(credits.nextExpiresAt || "")).getTime()
-    if (isFinite(expires) && expires > nowMs) text += " · next expires in " + formatDuration(expires - nowMs)
+    if (isFinite(expires) && expires > nowMs) text += " · " + I18n.tr("next expires in %1", formatDuration(expires - nowMs))
     return text
+  }
+
+  // A model-scoped title ("Opus Monthly") keeps the model and translates the window.
+  function windowLabel(title) {
+    var match = String(title || "").match(/^(.*\S)\s+(Monthly|Weekly|Session|Limit)$/)
+    return match ? match[1] + " " + I18n.tr(match[2]) : I18n.tr(String(title || ""))
   }
 
   function planLabel(p) {
@@ -576,13 +582,13 @@ Panel {
   }
 
   function formatDuration(ms) {
-    if (!(ms > 0)) return "now"
+    if (!(ms > 0)) return I18n.tr("now")
     var minutes = Math.floor(ms / 60000)
     var hours = Math.floor(minutes / 60)
     var days = Math.floor(hours / 24)
-    if (days > 0) return days + "d " + (hours % 24) + "h"
-    if (hours > 0) return hours + "h " + (minutes % 60) + "m"
-    return Math.max(1, minutes) + "m"
+    if (days > 0) return I18n.tr("%1d %2h", days, hours % 24)
+    if (hours > 0) return I18n.tr("%1h %2m", hours, minutes % 60)
+    return I18n.tr("%1m", Math.max(1, minutes))
   }
 
   // ---------------------------------------------------------------- balance
@@ -612,8 +618,8 @@ Panel {
 
   function balanceDetailText(b) {
     if (!b || !(b.funded > 0)) return ""
-    var text = formatMoney(b.spent, b.currency) + " spent of " + formatMoney(b.funded, b.currency) + " funded"
-    if (b.estimated) text += " · estimated"
+    var text = I18n.tr("%1 spent of %2 funded", formatMoney(b.spent, b.currency), formatMoney(b.funded, b.currency))
+    if (b.estimated) text += " · " + I18n.tr("estimated")
     return text
   }
 
@@ -654,16 +660,16 @@ Panel {
     }
 
     var phrases = []
-    if (week > 0) phrases.push(usage.formatTokenCount(week) + " tokens this week")
-    if (today > 0) phrases.push(usage.formatTokenCount(today) + " tokens today")
+    if (week > 0) phrases.push(I18n.tr("%1 tokens this week", usage.formatTokenCount(week)))
+    if (today > 0) phrases.push(I18n.tr("%1 tokens today", usage.formatTokenCount(today)))
     var topModel = ""
     for (var model in byModel) if (topModel === "" || byModel[model] > byModel[topModel]) topModel = model
-    if (topModel !== "" && byModel[topModel] > 0) phrases.push("Mostly " + topModel)
+    if (topModel !== "" && byModel[topModel] > 0) phrases.push(I18n.tr("Mostly %1", topModel))
     var busiest = ""
     for (var date in byDay) if (busiest === "" || byDay[date] > byDay[busiest]) busiest = date
-    if (busiest !== "" && byDay[busiest] > 0) phrases.push("Busiest day: " + dayName(busiest))
-    if (prompts > 0) phrases.push(prompts + " prompt" + (prompts === 1 ? "" : "s") + " today")
-    if (sessions > 0) phrases.push(sessions + " session" + (sessions === 1 ? "" : "s") + " today")
+    if (busiest !== "" && byDay[busiest] > 0) phrases.push(I18n.tr("Busiest day: %1", dayName(busiest)))
+    if (prompts > 0) phrases.push(I18n.tr(prompts === 1 ? "%1 prompt today" : "%1 prompts today", prompts))
+    if (sessions > 0) phrases.push(I18n.tr(sessions === 1 ? "%1 session today" : "%1 sessions today", sessions))
     return phrases
   }
   property int phraseIndex: 0
@@ -673,7 +679,7 @@ Panel {
   property string shownPhrase: ""
   readonly property string heroPhrase: addStage !== "" || blankSlate
     ? addHeading
-    : (shownPhrase !== "" ? shownPhrase : "Subscriptions")
+    : (shownPhrase !== "" ? shownPhrase : I18n.tr("Subscriptions"))
 
   function showPhrase() {
     var n = summaryPhrases.length
@@ -685,7 +691,7 @@ Panel {
   function dayName(date) {
     var parsed = new Date(String(date || "") + "T00:00:00")
     if (isNaN(parsed.getTime())) return String(date || "")
-    return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][parsed.getDay()]
+    return I18n.tr(["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][parsed.getDay()])
   }
 
   // Only speaks up when the numbers cover more than this machine.
@@ -694,7 +700,7 @@ Panel {
     for (var i = 0; i < providers.length; i++) {
       var count = Number(providers[i].syncDeviceCount || 0)
       if (providers[i].syncEnabled && count > 0)
-        return "Merged from " + count + " device" + (count === 1 ? "" : "s")
+        return I18n.tr(count === 1 ? "Merged from %1 device" : "Merged from %1 devices", count)
     }
     return ""
   }
@@ -744,8 +750,8 @@ Panel {
 
   // Adding takes over the hero's line, and the cursor starts over.
   readonly property string addHeading: picking || addProvider === ""
-    ? "Add an account"
-    : "Add " + (/^[AEIOU]/.test(addProviderName(addProvider)) ? "an " : "a ") + addProviderName(addProvider) + " account"
+    ? I18n.tr("Add an account")
+    : I18n.tr(/^[AEIOU]/.test(addProviderName(addProvider)) ? "Add an %1 account" : "Add a %1 account", addProviderName(addProvider))
   onAddStageChanged: {
     phraseSwap.stop()
     hero.metaOpacity = 1.0
@@ -804,7 +810,7 @@ Panel {
     stdout: SplitParser { onRead: function(line) { root.handleAddLine(line) } }
     onExited: {
       if (root.addStage === "running") {
-        root.addResult = "The sign-in didn't finish."
+        root.addResult = I18n.tr("The sign-in didn't finish.")
         root.addStage = "error"
       }
     }
@@ -939,7 +945,7 @@ Panel {
           PanelHero {
             id: hero
             width: parent.width
-            title: "Agents"
+            title: I18n.tr("Agents")
             meta: root.heroPhrase
             foreground: root.foreground
             fontFamily: root.fontFamily
@@ -965,7 +971,7 @@ Panel {
                   onHovered: root.pointAt("add")
                   readonly property bool adding: root.addStage !== ""
                   glyph: adding ? "󰅖" : "󰐕"
-                  tooltip: adding ? "Back to the limits" : "Add a subscription"
+                  tooltip: adding ? I18n.tr("Back to the limits") : I18n.tr("Add a subscription")
                   onClicked: adding ? root.cancelAdd() : root.addAccount()
                 }
 
@@ -974,7 +980,7 @@ Panel {
                   hasCursor: root.hasKey("launch")
                   onHovered: root.pointAt("launch")
                   glyph: "󰞷"
-                  tooltip: "Start the default agent"
+                  tooltip: I18n.tr("Start the default agent")
                   onClicked: root.launchAgent()
                 }
               }
@@ -1011,7 +1017,7 @@ Panel {
             spacing: Style.space(12)
 
             PanelSectionHeader {
-              text: "MAKE SOMETHING COOL"
+              text: I18n.tr("MAKE SOMETHING COOL")
               foreground: root.foreground
               fontFamily: root.fontFamily
             }
@@ -1065,7 +1071,8 @@ Panel {
     Text {
       visible: root.blankSlate && root.picking
       width: parent.width
-      text: "Sign in to an AI coding subscription, and this panel keeps track of how much of it you have left."
+      textFormat: Text.PlainText
+      text: I18n.tr("Sign in to an AI coding subscription, and this panel keeps track of how much of it you have left.")
       color: root.dim
       font.family: root.fontFamily
       font.pixelSize: Style.font.caption
@@ -1137,7 +1144,8 @@ Panel {
 
       Text {
         width: parent.width
-        text: "Name this account. It signs in through a private window, so your browser's current account isn't picked up."
+        textFormat: Text.PlainText
+        text: I18n.tr("Name this account. It signs in through a private window, so your browser's current account isn't picked up.")
         color: root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
@@ -1147,7 +1155,7 @@ Panel {
       TextField {
         id: addNameField
         width: parent.width
-        placeholderText: "Work"
+        placeholderText: I18n.tr("Work")
         foreground: root.foreground
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
@@ -1166,7 +1174,7 @@ Panel {
       Text {
         width: parent.width
         textFormat: Text.PlainText
-        text: root.addStatus
+        text: I18n.tr(root.addStatus)
         color: root.foreground
         font.family: root.fontFamily
         font.pixelSize: Style.font.bodySmall
@@ -1179,7 +1187,8 @@ Panel {
         spacing: Style.space(4)
 
         Text {
-          text: "Confirm this code in your browser"
+          textFormat: Text.PlainText
+          text: I18n.tr("Confirm this code in your browser")
           color: root.dim
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
@@ -1203,7 +1212,8 @@ Panel {
 
         Text {
           width: parent.width
-          text: "If the page shows a code instead of finishing, paste it here."
+          textFormat: Text.PlainText
+          text: I18n.tr("If the page shows a code instead of finishing, paste it here.")
           color: root.dim
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
@@ -1213,7 +1223,7 @@ Panel {
         TextField {
           id: pasteField
           width: parent.width
-          placeholderText: "Code"
+          placeholderText: I18n.tr("Code")
           foreground: root.foreground
           font.family: root.fontFamily
           font.pixelSize: Style.font.body
@@ -1224,7 +1234,7 @@ Panel {
 
       TextLink {
         visible: root.addUrl !== ""
-        text: "Open the sign-in page again"
+        text: I18n.tr("Open the sign-in page again")
         onClicked: root.reopenSignIn()
       }
     }
@@ -1234,7 +1244,7 @@ Panel {
       visible: root.addStage === "done" || root.addStage === "error"
       width: parent.width
       textFormat: Text.PlainText
-      text: root.addResult
+      text: I18n.tr(root.addResult)
       color: root.addStage === "error" ? root.urgent : root.foreground
       font.family: root.fontFamily
       font.pixelSize: Style.font.bodySmall
@@ -1330,9 +1340,9 @@ Panel {
     TextLink {
       visible: !section.multi && root.needsSignIn(section.provider)
       picked: root.hasKey("providerSignin", section.providerIndex)
-      text: "Sign-in required"
+      text: I18n.tr("Sign-in required")
       idleColor: root.urgent
-      tooltip: "Sign in to " + (section.provider ? section.provider.providerName : "") + " again"
+      tooltip: I18n.tr("Sign in to %1 again", section.provider ? section.provider.providerName : "")
       onClicked: root.signInAgain(section.provider, null)
     }
 
@@ -1341,7 +1351,7 @@ Panel {
       width: parent.width
       textFormat: Text.PlainText
       // Shown for the status, so a record with no help to offer says the status rather than nothing.
-      text: section.provider ? String(section.provider.authHelpText || section.provider.usageStatusText || "") : ""
+      text: section.provider ? I18n.tr(String(section.provider.authHelpText || section.provider.usageStatusText || "")) : ""
       color: root.urgent
       font.family: root.fontFamily
       font.pixelSize: Style.font.caption
@@ -1398,7 +1408,7 @@ Panel {
           textFormat: Text.PlainText
           width: parent.width * 0.3
           anchors.verticalCenter: parent.verticalCenter
-          text: "Balance"
+          text: I18n.tr("Balance")
           color: root.foreground
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
@@ -1568,7 +1578,7 @@ Panel {
 
     PanelToolTip {
       visible: tileMouse.containsMouse
-      text: "Start your default agent on a new " + tile.title.toLowerCase()
+      text: I18n.tr("Start your default agent on a new %1", tile.title.toLowerCase())
     }
   }
 
@@ -1772,9 +1782,9 @@ Panel {
           id: signInLink
           visible: root.needsSignIn(head.account)
           picked: head.pickedKind === "signin"
-          text: "Sign-in required"
+          text: I18n.tr("Sign-in required")
           idleColor: root.urgent
-          tooltip: "Sign in to this account again"
+          tooltip: I18n.tr("Sign in to this account again")
           onClicked: root.signInAgain(head.owner, head.account)
         }
       }
@@ -1810,7 +1820,8 @@ Panel {
         id: headActive
         visible: head.isActive
         anchors.right: parent.right
-        text: "ACTIVE"
+        textFormat: Text.PlainText
+        text: I18n.tr("ACTIVE")
         color: Commons.Color.accent
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
@@ -1829,19 +1840,19 @@ Panel {
 
         TextLink {
           visible: head.autoOn || useHover.hovered || head.picked
-          text: head.pickedKind === "autoswitch" ? "Autoswitch ⏎" : "Autoswitch"
+          text: I18n.tr("Autoswitch") + (head.pickedKind === "autoswitch" ? " ⏎" : "")
           picked: head.pickedKind === "autoswitch"
           current: head.autoOn
           tooltip: head.autoOn
-            ? "Stop switching automatically"
-            : "Switch here automatically at " + root.switchThreshold(head.owner) + "%"
+            ? I18n.tr("Stop switching automatically")
+            : I18n.tr("Switch here automatically at %1%", root.switchThreshold(head.owner))
           onClicked: root.setSwitchMode(head.owner, head.autoOn ? "manual" : "auto")
         }
 
         // With Autoswitch on, Use waits until the line is hovered or picked.
         TextLink {
           visible: !head.autoOn || useHover.hovered || head.picked
-          text: head.pickedKind === "account" ? "Use ⏎" : "Use"
+          text: I18n.tr("Use") + (head.pickedKind === "account" ? " ⏎" : "")
           picked: head.pickedKind === "account"
           onClicked: root.useAccount(head.owner, head.account)
         }
@@ -1858,7 +1869,8 @@ Panel {
 
     Text {
       id: unavailableLabel
-      text: "Usage unavailable"
+      textFormat: Text.PlainText
+      text: I18n.tr("Usage unavailable")
       color: root.dim
       font.family: root.fontFamily
       font.pixelSize: Style.font.bodySmall
@@ -1868,7 +1880,7 @@ Panel {
 
     PanelToolTip {
       visible: unavailableHover.hovered && unavailable.visible
-      text: unavailable.record ? String(unavailable.record.authHelpText || "Usage has not been updated yet.") : ""
+      text: unavailable.record ? I18n.tr(String(unavailable.record.authHelpText || "Usage has not been updated yet.")) : ""
     }
   }
 
@@ -1893,16 +1905,16 @@ Panel {
       text: {
         var lines = []
         if (compact.window) {
-          lines.push(compact.window.title + ": " + Math.round(compact.window.percent * 100) + "% used"
-            + (compact.resetMs > 0 ? " · resets in " + root.formatDuration(compact.resetMs) : ""))
+          lines.push(I18n.tr("%1: %2% used", root.windowLabel(compact.window.title), Math.round(compact.window.percent * 100))
+            + (compact.resetMs > 0 ? " · " + I18n.tr("resets in %1", root.formatDuration(compact.resetMs)) : ""))
         }
         if (compact.stale)
           lines.push(compact.fetchedAt > 0 && root.nowMs - compact.fetchedAt > 60000
-            ? "Last updated " + root.formatDuration(root.nowMs - compact.fetchedAt) + " ago"
-            : compact.fetchedAt > 0 ? "Last updated less than a minute ago" : "Last updated time unavailable")
+            ? I18n.tr("Last updated %1 ago", root.formatDuration(root.nowMs - compact.fetchedAt))
+            : compact.fetchedAt > 0 ? I18n.tr("Last updated less than a minute ago") : I18n.tr("Last updated time unavailable"))
         for (var i = 0; i < compact.scoped.length; i++)
-          lines.push(compact.scoped[i].title + ": " + Math.round(compact.scoped[i].percent * 100) + "% of its "
-            + String(compact.window ? compact.window.title : "").toLowerCase() + " allowance")
+          lines.push(I18n.tr("%1: %2% of its %3 allowance", root.windowLabel(compact.scoped[i].title), Math.round(compact.scoped[i].percent * 100),
+            root.windowLabel(compact.window ? compact.window.title : "").toLowerCase()))
         return lines.join("\n")
       }
     }
@@ -1912,7 +1924,7 @@ Panel {
       textFormat: Text.PlainText
       width: parent.width * 0.3
       anchors.verticalCenter: parent.verticalCenter
-      text: compact.window ? compact.window.title : ""
+      text: compact.window ? root.windowLabel(compact.window.title) : ""
       color: root.foreground
       font.family: root.fontFamily
       font.pixelSize: Style.font.bodySmall

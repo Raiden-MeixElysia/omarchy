@@ -21,7 +21,7 @@ BarWidget {
     : setting("format", "dddd HH:mm")
   readonly property string configuredAltFormat: vertical
     ? setting("verticalFormatAlt", "dd\nMMM\n'W'ww\n''yy")
-    : setting("formatAlt", "d MMMM 'W'ww yyyy")
+    : setting("formatAlt", I18n.chinese ? "yyyy年M月d日 'W'ww" : "d MMMM 'W'ww yyyy")
 
   readonly property var formatRing: Model.clockFormatRing(configuredFormat, configuredAltFormat, Model.clockFormats(vertical))
 
@@ -56,8 +56,10 @@ BarWidget {
       root.bar.shell.updateEntryInline(root.moduleName, entry)
   }
 
+  // Qt.formatDateTime is always English; a Chinese session takes day and month names from its locale.
   function formatted(date) {
-    return Qt.formatDateTime(date, activeFormat.replace(/ww/g, Model.isoWeekLiteral(date.getFullYear(), date.getMonth(), date.getDate())))
+    var format = activeFormat.replace(/ww/g, Model.isoWeekLiteral(date.getFullYear(), date.getMonth(), date.getDate()))
+    return I18n.chinese ? Qt.locale().toString(date, format) : Qt.formatDateTime(date, format)
   }
 
   // ---- Calendar popup. Shape contract for shell.summon/hide/toggle
@@ -153,7 +155,7 @@ BarWidget {
     fixedHeight: root.vertical ? root.verticalLines.length * Style.bar.iconSlot : -1
     horizontalMargin: 8.75
     verticalPadding: 8.75
-    tooltipText: "Right-click to toggle format"
+    tooltipText: I18n.tr("Right-click to toggle format")
 
     onPressed: function(b) {
       if (b === Qt.RightButton) root.cycleFormat()

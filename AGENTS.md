@@ -124,6 +124,12 @@ Exceptions are allowed for migration and package-helper scripts where the helper
 - Do not add `aliases` to new menu entries. Aliases are reserved for
   established alternate names users already type, kept for compatibility.
 
+# Language
+
+- `omarchy-language en|zh` (Setup > Language) owns `LANG` in `/etc/locale.conf`; the installer sets it from its first screen. Nothing in `omarchy update` or migrations may change `/etc/locale.conf`.
+- Chinese menu labels live in `default/omarchy/omarchy-menu.zh-cn.jsonc`, merged when `LANG` starts with `zh_CN`; give a new menu row with translatable words a label there.
+- Shell text goes through `I18n.tr("English %1", arg)` from `qs.Commons`, with its Chinese in `shell/Commons/I18nZh.js` keyed by the English. Notifications and OSD messages are worded by their sender with `omarchy-text "English %1" "$arg"` (Python: `text()`, QML: `I18n.tr`), which reads the same table; the shell shows them as given, so user text is never translated. `test/shell.d/shell-i18n-test.sh` fails on a missing entry.
+
 # Config Structure
 
 - `config/` - default configs copied to `~/.config/`
