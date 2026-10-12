@@ -86,7 +86,7 @@ omarchy `omarchycn` merges them onto `quattro` and adds what no PR can carry yet
 - [x] T32 Rebuild omarchy as PR branches on current upstream: CJK fontconfig, language and menus, shell text, cn developer mirrors (on #13690), Setup > Region and China Apps; `omarchycn` becomes their merge
 - [x] T33 Rebuild omarchy-iso as one PR branch on iso #241 and current upstream; `omarchycn` becomes it; omarchy-pkgs follows upstream master
 - [x] T34 Build the local-source ISO and test in QEMU: Chinese offline, English
-- [ ] T35 Acceptance checklist for T28–T34
+- [x] T35 Acceptance checklist for T28–T34
 - [ ] T36 Open the PRs one at a time from Raiden-MeixElysia
 
 ## Acceptance checklist for T28–T34 (maintainers' ISO test, 2026-10-11)
