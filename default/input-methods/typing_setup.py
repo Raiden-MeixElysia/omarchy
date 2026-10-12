@@ -10,6 +10,11 @@ import sys
 import configure as setup
 
 
+def text(english, *args):
+  """English with %1.. filled, in the session's language, from the shell's table."""
+  return subprocess.run(["omarchy-text", english, *map(str, args)], capture_output=True, text=True, check=True).stdout.rstrip("\n")
+
+
 def keyboard_catalog():
   # Read the same choices as the ISO and first-boot form, then convert console
   # keymaps through systemd's mapping, just as localectl does during install.
@@ -64,7 +69,7 @@ def choose(title, catalog, selected, kind, overrides=None):
   if result.returncode == 1:
     return None
   if result.returncode:
-    raise RuntimeError(result.stderr.strip() or "The selection menu could not open")
+    raise RuntimeError(result.stderr.strip() or text("The selection menu could not open"))
 
 
 def input_catalog(items):
@@ -78,7 +83,7 @@ def input_catalog(items):
 
 def input_items(items, selected, overrides=None):
   if not any(item[0].startswith("keyboard-") for item in items):
-    raise RuntimeError("The current input group has no keyboard input")
+    raise RuntimeError(text("The current input group has no keyboard input"))
   # Retained entries keep their switching order; new engines follow them.
   kept = [item for item in items if item[0].startswith("keyboard-") or item[0] in selected]
   current = dict(items)
@@ -93,7 +98,7 @@ def set_inputs(group, layout, before, after):
     setup.run(["fcitx5-remote", "-c"])
     setup.live_set(group, layout, after)
     if setup.live_group() != (group, layout, after):
-      raise RuntimeError("Fcitx did not retain the input selection")
+      raise RuntimeError(text("Fcitx did not retain the input selection"))
   except BaseException:
     setup.live_set(group, layout, before)
     raise
@@ -103,7 +108,7 @@ def configure_inputs():
   group, layout, items = setup.live_group()
   catalog, available = input_catalog(items)
   current = [name for name, override in items if not name.startswith("keyboard-")]
-  choose("Input Methods", catalog, current, "input", dict(items))
+  choose(text("Input Methods"), catalog, current, "input", dict(items))
 
 
 def load_engines(names, catalog):
@@ -112,7 +117,7 @@ def load_engines(names, catalog):
             if subprocess.run(["omarchy-pkg-present", package], capture_output=True).returncode]
   if absent or any(name not in setup.PRESETS for name in names):
     labels = ", ".join(catalog.get(name, name) for name in names)
-    raise RuntimeError(f"Install {' '.join(absent) or 'its engine'} to use {labels}")
+    raise RuntimeError(text("Install %1 to use %2", " ".join(absent) or text("its engine"), labels))
   # Fcitx discovers engines only at startup, so one installed while it was
   # running (by an update, say) needs a restart before it can be selected.
   setup.run(["omarchy-restart-xcompose"])
@@ -149,7 +154,7 @@ def add_input(method):
 
 def keyboard_values(selected):
   if not selected:
-    raise ValueError("Select at least one keyboard layout")
+    raise ValueError(text("Select at least one keyboard layout"))
   parts = [value.split(":", 1) for value in selected]
   # Preserve the installer's Latin-leading rule for desktop keybindings.
   if parts[0][0] in setup.NON_LATIN:
@@ -176,19 +181,19 @@ def save_keyboard(selected):
     expected = [layout + (":" + variant if variant else "")
                 for layout, variant in zip(layouts.split(","), variants.split(","))]
     if keyboard_selection() != expected:
-      raise RuntimeError("Your personal keyboard layout override takes precedence over this selection")
+      raise RuntimeError(text("Your personal keyboard layout override takes precedence over this selection"))
     first_layout = layouts.split(",")[0]
     first_variant = variants.split(",")[0]
     group_layout = first_layout + ("-" + first_variant if first_variant else "")
     primary = next((item[0] for item in before if item[0].startswith("keyboard-")), None)
     if primary is None:
-      raise RuntimeError("The current input group has no keyboard input")
+      raise RuntimeError(text("The current input group has no keyboard input"))
     keyboard = "keyboard-" + group_layout
     after = [[keyboard, ""]] + [item for item in before if item[0] not in (primary, keyboard)]
     group_changed = True
     setup.live_set(group, group_layout, after)
     if setup.live_group() != (group, group_layout, after):
-      raise RuntimeError("Fcitx did not retain the keyboard selection")
+      raise RuntimeError(text("Fcitx did not retain the keyboard selection"))
   except BaseException:
     if original is None:
       path.resolve().unlink(missing_ok=True)
@@ -205,7 +210,7 @@ def save_keyboard(selected):
 def configure_keyboard():
   current = keyboard_selection()
   catalog = keyboard_catalog()
-  choose("Keyboard Layouts", catalog, current, "keyboard")
+  choose(text("Keyboard Layouts"), catalog, current, "keyboard")
 
 
 def apply_selection(kind, context, values):
@@ -213,7 +218,7 @@ def apply_selection(kind, context, values):
   rows = picker_rows(catalog, [])
   valid = {row[1:]: key for key, row in rows.items()}
   if not isinstance(values, list) or any(not isinstance(value, str) or value not in valid for value in values):
-    raise ValueError("The menu returned an invalid selection")
+    raise ValueError(text("The menu returned an invalid selection"))
   selected = list(dict.fromkeys(valid[value] for value in values))
   if kind == "input":
     save_inputs(selected, context.get("overrides"))
@@ -228,13 +233,13 @@ def main():
     try:
       add_input(sys.argv[2])
     except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:
-      raise SystemExit(f"Input method could not be added: {error}")
+      raise SystemExit(text("Input method could not be added: %1", error))
     return
   applying = len(sys.argv) == 5 and sys.argv[1] == "apply"
   kind = sys.argv[2] if applying else sys.argv[1] if len(sys.argv) == 2 else ""
   if kind not in ("input", "keyboard"):
     raise ValueError("Choose keyboard or input setup")
-  title = "Input methods" if kind == "input" else "Keyboard layouts"
+  title = text("Input methods could not be updated") if kind == "input" else text("Keyboard layouts could not be updated")
   try:
     if applying:
       apply_selection(kind, json.loads(sys.argv[3]), json.loads(sys.argv[4]))
@@ -243,7 +248,7 @@ def main():
     else:
       configure_keyboard()
   except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:
-    subprocess.run(["omarchy-notification-send", title + " could not be updated", str(error)], check=True)
+    subprocess.run(["omarchy-notification-send", title, str(error)], check=True)
     raise SystemExit(1)
 
 

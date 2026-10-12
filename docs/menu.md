@@ -56,6 +56,8 @@ or re-icon a row without re-declaring its action, and an overridden entry
 keeps its original position in the list. New ids append. A `root` entry is
 injected if neither file declares one.
 
+When `LANG` starts with `zh_CN`, `default/omarchy/omarchy-menu.zh-cn.jsonc` is merged between the defaults and the user extension. It only retitles shipped ids, so a user extension still wins, and the language follows `/etc/locale.conf` instead of any file `omarchy update` rewrites.
+
 The sample extension at `config/omarchy/extensions/omarchy-menu.jsonc`
 (refreshed into `~/.config/`) documents the format in its header and ships
 only comments, so the default state adds nothing.

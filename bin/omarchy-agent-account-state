@@ -73,6 +73,11 @@ class AccountError(Exception):
   pass
 
 
+def text(english: str, *args: object) -> str:
+  """English with %1.. filled, in the session's language, from the shell's table."""
+  return subprocess.run(["omarchy-text", english, *map(str, args)], capture_output=True, text=True, check=True).stdout.rstrip("\n")
+
+
 # ------------------------------------------------------------------- paths
 
 
@@ -335,12 +340,12 @@ def begin(provider: str) -> Path:
 def register(provider: str, label: str, pending: Path) -> dict[str, Any]:
   pending = pending.resolve()
   if pending.parent != (accounts_root() / provider / ".pending").resolve():
-    raise AccountError(f"{pending} is not a pending {PROVIDERS[provider]['name']} login")
+    raise AccountError(text("%1 is not a pending %2 login", pending, PROVIDERS[provider]['name']))
 
   found = identity(provider, pending)
   if not found["accountId"]:
     shutil.rmtree(pending, ignore_errors=True)
-    raise AccountError("The login didn't finish, so no account was added.")
+    raise AccountError(text("The login didn't finish, so no account was added."))
 
   with Locked(provider) as registry:
     # Each home is asked who it is now, not trusted from when it was added: a
@@ -350,10 +355,10 @@ def register(provider: str, label: str, pending: Path) -> dict[str, Any]:
     for account in registry["accounts"]:
       if account.get("accountId") == found["accountId"]:
         shutil.rmtree(pending, ignore_errors=True)
-        raise AccountError(
-          f"That's {account['label']} ({found['email'] or 'already added'}). "
-          "Try again, and sign in as the other account in the private window."
-        )
+        raise AccountError(text(
+          "That's %1 (%2). Try again, and sign in as the other account in the private window.",
+          account["label"], found["email"] or text("already added"),
+        ))
 
     label = label.strip() or found["email"].split("@")[0] or "Account"
     account_id = unique_id(provider, registry, label)
@@ -395,11 +400,11 @@ def unique_id(provider: str, registry: dict[str, Any], label: str, keep: dict[st
 def rename(provider: str, target: str, label: str) -> dict[str, Any]:
   label = label.strip()
   if not label:
-    raise AccountError("Give the account a name")
+    raise AccountError(text("Give the account a name"))
   with Locked(provider) as registry:
     account = find(registry, target)
     if not account:
-      raise AccountError(f"No {PROVIDERS[provider]['name']} account named {target}")
+      raise AccountError(text("No %1 account named %2", PROVIDERS[provider]['name'], target))
     new_id = unique_id(provider, registry, label, keep=account)
     if not account.get("primary") and not account.get("home"):
       account["home"] = str(account_home(provider, account))
@@ -428,7 +433,7 @@ def use(provider: str, target: str) -> tuple[dict[str, Any], dict[str, Any]]:
       target = ids[(ids.index(previous["id"]) + 1) % len(ids)]
     account = find(registry, target)
     if not account:
-      raise AccountError(f"No {PROVIDERS[provider]['name']} account named {target}")
+      raise AccountError(text("No %1 account named %2", PROVIDERS[provider]['name'], target))
     registry["active"] = account["id"]
     registry["alert"] = ""
     if not account.get("primary"):
@@ -456,12 +461,12 @@ def remove(provider: str, target: str) -> dict[str, Any]:
   with Locked(provider) as registry:
     account = find(registry, target)
     if not account:
-      raise AccountError(f"No {PROVIDERS[provider]['name']} account named {target}")
+      raise AccountError(text("No %1 account named %2", PROVIDERS[provider]['name'], target))
     if account.get("primary"):
-      raise AccountError(f"{account['label']} is the login in {primary_home(provider)}; it can't be removed here.")
+      raise AccountError(text("%1 is the login in %2; it can't be removed here.", account["label"], primary_home(provider)))
     home = account_home(provider, account)
     if home_in_use(provider, home):
-      raise AccountError(f"A running {PROVIDERS[provider]['name']} session uses {account['label']}. Quit it first, then remove the account.")
+      raise AccountError(text("A running %1 session uses %2. Quit it first, then remove the account.", PROVIDERS[provider]['name'], account["label"]))
     # Only the account's own directory goes. Its links point into the primary
     # home, and rmtree removes a link without following it.
     if home.resolve().parent == (accounts_root() / provider).resolve():
@@ -474,14 +479,14 @@ def remove(provider: str, target: str) -> dict[str, Any]:
 
 def set_mode(provider: str, mode: str, threshold: str | None) -> dict[str, Any]:
   if mode not in SWITCH_MODES:
-    raise AccountError("Switch mode is manual or auto")
+    raise AccountError(text("Switch mode is manual or auto"))
   with Locked(provider) as registry:
     registry["switch"] = mode
     if threshold is not None:
       try:
         registry["threshold"] = max(50, min(100, int(threshold)))
       except ValueError:
-        raise AccountError("The threshold is a percentage between 50 and 100")
+        raise AccountError(text("The threshold is a percentage between 50 and 100"))
     registry["alert"] = ""
     return dict(registry)
 
@@ -556,10 +561,10 @@ def duration(delta: dt.timedelta) -> str:
   hours, minutes = divmod(minutes, 60)
   days, hours = divmod(hours, 24)
   if days:
-    return f"{days}d {hours}h"
+    return text("%1d %2h", days, hours)
   if hours:
-    return f"{hours}h {minutes}m"
-  return f"{minutes}m"
+    return text("%1h %2m", hours, minutes)
+  return text("%1m", minutes)
 
 
 # The whole switching policy, with no I/O: given the registry and the per
@@ -659,21 +664,23 @@ def autoswitch(provider: str, now: dt.datetime | None = None) -> bool:
     threshold = registry["threshold"]
     if decision["action"] == "exhausted":
       soonest = decision["soonest"]
-      when = f" {soonest[1]['label']} resets in {duration(soonest[0] - now)}." if soonest else ""
-      notify(f"All {name} accounts are over {threshold}%", f"Staying on {source['label']}.{when}")
+      staying = text("Staying on %1.", source["label"])
+      if soonest:
+        staying = text("Staying on %1. %2 resets in %3.", source["label"], soonest[1]["label"], duration(soonest[0] - now))
+      notify(text("All %1 accounts are over %2%", name, threshold), staying)
       return False
 
     target = decision["to"]
-    headline = f"{source['label']} is at {round(decision['fromPeak'])}% of a {name} limit"
+    headline = text("%1 is at %2% of a %3 limit", source["label"], round(decision["fromPeak"]), name)
     if decision["action"] == "switch":
       registry["active"] = target["id"]
       if not target.get("primary"):
         link_shared(provider, account_home(provider, target))
-      notify(headline, f"New {name} sessions now use {target['label']} ({round(decision['toPeak'])}%). Running sessions stay on {source['label']}.")
+      notify(headline, text("New %1 sessions now use %2 (%3%). Running sessions stay on %4.", name, target["label"], round(decision["toPeak"]), source["label"]))
       return True
     notify(
       headline,
-      f"{target['label']} is at {round(decision['toPeak'])}%. Click to switch new sessions to it.",
+      text("%1 is at %2%. Click to switch new sessions to it.", target["label"], round(decision["toPeak"])),
       ["omarchy-agent-account-use", provider, target["id"]],
     )
     return False

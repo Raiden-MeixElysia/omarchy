@@ -21,16 +21,16 @@ Panel {
   property int phraseIndex: 0
 
   readonly property var activePhrases: [
-    "Filing files",
-    "Distributing data",
-    "Shuffling folders",
-    "Boxing bytes",
-    "Sorting stuff",
-    "Syncing secrets",
-    "Packing packets",
-    "Moving memories",
-    "Wrangling revisions",
-    "Cataloging chaos"
+    I18n.tr("Filing files"),
+    I18n.tr("Distributing data"),
+    I18n.tr("Shuffling folders"),
+    I18n.tr("Boxing bytes"),
+    I18n.tr("Sorting stuff"),
+    I18n.tr("Syncing secrets"),
+    I18n.tr("Packing packets"),
+    I18n.tr("Moving memories"),
+    I18n.tr("Wrangling revisions"),
+    I18n.tr("Cataloging chaos")
   ]
   readonly property string heroPhraseText: activePhrases[phraseIndex % activePhrases.length]
   readonly property color foreground: bar ? bar.foreground : Commons.Color.foreground
@@ -38,7 +38,14 @@ Panel {
   readonly property color dim: Qt.darker(foreground, 1.55)
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
   readonly property color iconColor: dropbox.authenticated && dropbox.active ? foreground : dim
-  readonly property string toggleHint: dropbox.active ? "Pause syncing" : "Resume syncing"
+  // Model.fileMeta reads "5m ago · Folder"; the age is translated, the folder name kept.
+  function fileMetaText(file) {
+    var parts = Model.fileMeta(file).split(" · ")
+    parts[0] = I18n.trMatch(parts[0], ["Just now", "Unknown time", "%1mo ago", "%1m ago", "%1h ago", "%1d ago", "%1y ago"])
+    return parts.join(" · ")
+  }
+
+  readonly property string toggleHint: dropbox.active ? I18n.tr("Pause syncing") : I18n.tr("Resume syncing")
   readonly property color barIconColor: dropbox.authenticated && dropbox.active ? barForeground : Qt.darker(barForeground, 1.55)
   // Only claim the header cursor when the switch is actually on screen —
   // "header" stays navigable, but an absent CLI leaves nothing to highlight.
@@ -247,7 +254,7 @@ Panel {
               id: hero
               width: parent.width
               title: "Dropbox"
-              meta: dropbox.active ? root.heroPhraseText : "Syncing paused"
+              meta: dropbox.active ? root.heroPhraseText : I18n.tr("Syncing paused")
               foreground: root.foreground
               fontFamily: root.fontFamily
               iconOpacity: dropbox.active ? 1.0 : 0.5
@@ -287,7 +294,7 @@ Panel {
             textFormat: Text.PlainText
             visible: dropbox.actionStatus !== "" || dropbox.lastError !== ""
             width: parent.width
-            text: dropbox.actionStatus !== "" ? dropbox.actionStatus : dropbox.lastError
+            text: I18n.tr(dropbox.actionStatus !== "" ? dropbox.actionStatus : dropbox.lastError)
             color: dropbox.lastError !== "" && dropbox.actionStatus === "" ? root.urgent : root.dim
             font.family: root.fontFamily
             font.pixelSize: Style.font.bodySmall
@@ -307,7 +314,7 @@ Panel {
             Column {
               width: parent.width
               spacing: Style.spacing.labelGap
-              InfoPair { label: "Stored"; value: Model.usageText(dropbox.usedBytes, dropbox.quotaBytes, dropbox.quotaKnown) }
+              InfoPair { label: I18n.tr("Stored"); value: I18n.trMatch(Model.usageText(dropbox.usedBytes, dropbox.quotaBytes, dropbox.quotaKnown), ["%1 of %2"]) }
             }
           }
 
@@ -322,7 +329,7 @@ Panel {
             spacing: Style.space(10)
 
             PanelSectionHeader {
-              text: "RECENT FILES"
+              text: I18n.tr("RECENT FILES")
               foreground: root.foreground
               fontFamily: root.fontFamily
             }
@@ -330,7 +337,8 @@ Panel {
             Text {
               visible: dropbox.files.length === 0
               width: parent.width
-              text: "No synced files found."
+              textFormat: Text.PlainText
+              text: I18n.tr("No synced files found.")
               color: root.dim
               font.family: root.fontFamily
               font.pixelSize: Style.font.body
@@ -427,7 +435,7 @@ Panel {
         Text {
           textFormat: Text.PlainText
           Layout.fillWidth: true
-          text: dropbox.installed ? "Login to Dropbox" : "Dropbox CLI is not installed"
+          text: dropbox.installed ? I18n.tr("Login to Dropbox") : I18n.tr("Dropbox CLI is not installed")
           color: root.foreground
           font.family: root.fontFamily
           font.pixelSize: Style.font.body
@@ -437,7 +445,7 @@ Panel {
         Text {
           textFormat: Text.PlainText
           Layout.fillWidth: true
-          text: dropbox.installed ? "Start the authentication flow" : "Install Dropbox from the service menu"
+          text: dropbox.installed ? I18n.tr("Start the authentication flow") : I18n.tr("Install Dropbox from the service menu")
           color: root.dim
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
@@ -460,7 +468,7 @@ Panel {
     id: fileRow
     property var file: null
     property int rowIndex: 0
-    readonly property string fileName: file ? String(file.name || "Untitled") : "Untitled"
+    readonly property string fileName: file ? String(file.name || I18n.tr("Untitled")) : I18n.tr("Untitled")
 
     hasCursor: root.cursorActive && root.focusSection === "files" && root.fileIndex === rowIndex
     foreground: root.foreground
@@ -510,7 +518,7 @@ Panel {
         Text {
           textFormat: Text.PlainText
           Layout.fillWidth: true
-          text: Model.fileMeta(fileRow.file)
+          text: root.fileMetaText(fileRow.file)
           color: root.dim
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption

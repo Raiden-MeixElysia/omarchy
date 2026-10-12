@@ -37,9 +37,9 @@ if (( $# == 0 )); then
 fi
 
 case $1 in
-  opaque) LABEL="Opaque windows" ;;
-  transparent) LABEL="Transparent windows" ;;
-  glassy) LABEL="Glassy windows" ;;
+  opaque) LABEL=$(omarchy-text "Opaque windows") ;;
+  transparent) LABEL=$(omarchy-text "Transparent windows") ;;
+  glassy) LABEL=$(omarchy-text "Glassy windows") ;;
   *)
     echo "Usage: omarchy-hyprland-window-transparency [opaque|transparent|glassy]" >&2
     exit 1

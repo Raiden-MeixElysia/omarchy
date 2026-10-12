@@ -335,8 +335,8 @@ Panel {
   }
 
   // No full stop: a period hanging off the arc reads as a speck.
-  readonly property string hereLine: "It's " + localTime + " here"
-    + (homeCity !== "" ? " in " + homeCity : "")
+  readonly property string hereLine: I18n.tr("It's %1 here", localTime)
+    + (homeCity !== "" ? I18n.tr(" in %1", homeCity) : "")
     + (scrubLabel !== "" ? "  " + scrubLabel : "")
 
   // A capital's line box has empty space above it; the row's top pad drops by it.
@@ -715,7 +715,7 @@ Panel {
     bar: root.bar
     slotSize: Style.bar.statusSlot
     text: "󰇧"
-    tooltipText: "World clock"
+    tooltipText: I18n.tr("World clock")
     onPressed: function(buttonCode) {
       if (buttonCode === Qt.RightButton || buttonCode === Qt.MiddleButton) root.refresh()
       else root.toggle()

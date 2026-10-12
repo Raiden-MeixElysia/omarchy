@@ -87,6 +87,39 @@ OMARCHY_RESERVED_USERNAMES='^(root|bin|daemon|mail|ftp|http|nobody|dbus|systemd-
 OMARCHY_HOSTNAME_PATTERN='^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$'
 OMARCHY_HOSTNAME_DEFAULT='omarchy'
 
+# The ISO sets OMARCHY_INSTALL_LANG=zh in its CJK console; omarchy_text then prints the OMARCHY_ZH entry.
+declare -gA OMARCHY_ZH=(
+  ["Select keyboard layout"]="选择键盘布局"
+  ["Alphanumeric without spaces (like dhh)"]="字母和数字，不含空格（如 dhh）"
+  ["Username> "]="用户名> "
+  ["Username is reserved for system"]="这个用户名由系统保留"
+  ["That username already exists on this machine"]="本机已有这个用户名"
+  ["Username must be alphanumeric with no spaces"]="用户名只能用字母和数字，不含空格"
+  ["Used for user + root, and disk encryption when enabled"]="用于用户和 root，开启加密时也用于解锁磁盘"
+  ["Password> "]="密码> "
+  ["Must match the password you just typed"]="与刚才输入的密码一致"
+  ["Confirm> "]="确认密码> "
+  ["Your password can't be blank!"]="密码不能为空"
+  ["Passwords didn't match!"]="两次输入的密码不一致"
+  ["Used for git authentication (hit return to skip)"]="用于 git 身份（回车跳过）"
+  ["Full name> "]="姓名> "
+  ["Email address> "]="邮箱> "
+  ["Letters, digits, and dashes (or return for 'omarchy')"]="字母、数字和连字符（回车用 omarchy）"
+  ["Hostname> "]="主机名> "
+  ["Hostname must be 1-63 letters, digits, or dashes, and cannot start or end with a dash"]="主机名为 1-63 个字母、数字或连字符，首尾不能是连字符"
+  ["Timezone"]="时区"
+)
+
+omarchy_text() {
+  local text=$1
+  shift
+  if [[ ${OMARCHY_INSTALL_LANG:-} == "zh" && -n ${OMARCHY_ZH[$text]:-} ]]; then
+    text=${OMARCHY_ZH[$text]}
+  fi
+  # shellcheck disable=SC2059
+  printf -- "$text" "$@"
+}
+
 # Installer targets are empty, so any account is fair game; first-boot setup
 # overrides this because its machine already has users.
 omarchy_username_taken() { return 1; }
@@ -95,10 +128,29 @@ omarchy_username_taken() { return 1; }
 # by `status=$?`: one caller runs under `set -e`, where a cancelled prompt is a
 # failing assignment that would kill the script before the status is read.
 
+# English or Simplified Chinese; the Chinese name shows only in a CJK console.
+omarchy_prompt_language() {
+  local chinese="Chinese" header="Select language" selected=English choice status
+  if [[ -n ${OMARCHY_CJK_CONSOLE:-} ]]; then
+    chinese="简体中文 Chinese"
+    header="Select language · 选择语言"
+  fi
+  [[ $language == "zh" ]] && selected=$chinese
+  choice=$(printf '%s\n' English "$chinese" | gum choose --selected "$selected" --header "$header") && status=0 || status=$?
+  ((status == 0)) || return $status
+
+  if [[ $choice == "English" ]]; then
+    language=en
+  else
+    language=zh
+  fi
+}
+
+# Callers may name the layout to preselect.
 omarchy_prompt_keyboard() {
-  local choice status
+  local choice status selected=${1:-English (US)}
   choice=$(printf '%s\n' "$OMARCHY_KEYBOARD_LAYOUTS" | cut -d'|' -f1 |
-    gum choose --height 10 --selected "English (US)" --header "Select keyboard layout") && status=0 || status=$?
+    gum choose --height 10 --selected "${selected//,/\\,}" --header "$(omarchy_text "Select keyboard layout")") && status=0 || status=$?
   ((status == 0)) || return $status
 
   local selection
@@ -122,19 +174,19 @@ omarchy_persist_input_selection() {
 omarchy_prompt_username() {
   local status
   while true; do
-    username=$(gum input --placeholder "Alphanumeric without spaces (like dhh)" --prompt.foreground="#845DF9" --prompt "Username> ") && status=0 || status=$?
+    username=$(gum input --placeholder "$(omarchy_text "Alphanumeric without spaces (like dhh)")" --prompt.foreground="#845DF9" --prompt "$(omarchy_text "Username> ")") && status=0 || status=$?
     ((status == 0)) || return $status
 
     if [[ "$username" =~ $OMARCHY_USERNAME_PATTERN ]]; then
       if [[ "$username" =~ $OMARCHY_RESERVED_USERNAMES ]]; then
-        notice "Username is reserved for system" 1
+        notice "$(omarchy_text "Username is reserved for system")" 1
       elif omarchy_username_taken "$username"; then
-        notice "That username already exists on this machine" 1
+        notice "$(omarchy_text "That username already exists on this machine")" 1
       else
         return 0
       fi
     else
-      notice "Username must be alphanumeric with no spaces" 1
+      notice "$(omarchy_text "Username must be alphanumeric with no spaces")" 1
     fi
   done
 }
@@ -142,17 +194,17 @@ omarchy_prompt_username() {
 omarchy_prompt_password() {
   local status
   while true; do
-    password=$(gum input --placeholder "Used for user + root, and disk encryption when enabled" --prompt.foreground="#845DF9" --password --prompt "Password> ") && status=0 || status=$?
+    password=$(gum input --placeholder "$(omarchy_text "Used for user + root, and disk encryption when enabled")" --prompt.foreground="#845DF9" --password --prompt "$(omarchy_text "Password> ")") && status=0 || status=$?
     ((status == 0)) || return $status
-    password_confirmation=$(gum input --placeholder "Must match the password you just typed" --prompt.foreground="#845DF9" --password --prompt "Confirm> ") && status=0 || status=$?
+    password_confirmation=$(gum input --placeholder "$(omarchy_text "Must match the password you just typed")" --prompt.foreground="#845DF9" --password --prompt "$(omarchy_text "Confirm> ")") && status=0 || status=$?
     ((status == 0)) || return $status
 
     if [[ -n "$password" && "$password" == "$password_confirmation" ]]; then
       return 0
     elif [[ -z "$password" ]]; then
-      notice "Your password can't be blank!" 1
+      notice "$(omarchy_text "Your password can't be blank!")" 1
     else
-      notice "Passwords didn't match!" 1
+      notice "$(omarchy_text "Passwords didn't match!")" 1
     fi
   done
 }
@@ -161,16 +213,16 @@ omarchy_prompt_password() {
 # only Esc/Ctrl+C end the prompt early.
 omarchy_prompt_identity() {
   local status
-  full_name=$(gum input --placeholder "Used for git authentication (hit return to skip)" --prompt.foreground="#845DF9" --prompt "Full name> ") && status=0 || status=$?
+  full_name=$(gum input --placeholder "$(omarchy_text "Used for git authentication (hit return to skip)")" --prompt.foreground="#845DF9" --prompt "$(omarchy_text "Full name> ")") && status=0 || status=$?
   ((status == 0)) || return $status
-  email_address=$(gum input --placeholder "Used for git authentication (hit return to skip)" --prompt.foreground="#845DF9" --prompt "Email address> ") && status=0 || status=$?
+  email_address=$(gum input --placeholder "$(omarchy_text "Used for git authentication (hit return to skip)")" --prompt.foreground="#845DF9" --prompt "$(omarchy_text "Email address> ")") && status=0 || status=$?
   return $status
 }
 
 omarchy_prompt_hostname() {
   local status
   while true; do
-    hostname=$(gum input --placeholder "Letters, digits, and dashes (or return for 'omarchy')" --prompt.foreground="#845DF9" --prompt "Hostname> ") && status=0 || status=$?
+    hostname=$(gum input --placeholder "$(omarchy_text "Letters, digits, and dashes (or return for 'omarchy')")" --prompt.foreground="#845DF9" --prompt "$(omarchy_text "Hostname> ")") && status=0 || status=$?
     ((status == 0)) || return $status
 
     if [[ -z $hostname ]]; then
@@ -179,7 +231,7 @@ omarchy_prompt_hostname() {
     elif [[ "$hostname" =~ $OMARCHY_HOSTNAME_PATTERN ]]; then
       return 0
     else
-      notice "Hostname must be 1-63 letters, digits, or dashes, and cannot start or end with a dash" 1
+      notice "$(omarchy_text "Hostname must be 1-63 letters, digits, or dashes, and cannot start or end with a dash")" 1
     fi
   done
 }
@@ -191,9 +243,9 @@ omarchy_prompt_timezone() {
   guess=$(tzupdate -p 2>/dev/null) || guess=""
 
   if [[ -n $guess ]]; then
-    timezone=$(timedatectl list-timezones | gum choose --height 10 --selected "$guess" --header "Timezone") && status=0 || status=$?
+    timezone=$(timedatectl list-timezones | gum choose --height 10 --selected "$guess" --header "$(omarchy_text "Timezone")") && status=0 || status=$?
   else
-    timezone=$(timedatectl list-timezones | gum filter --height 10 --header "Timezone") && status=0 || status=$?
+    timezone=$(timedatectl list-timezones | gum filter --height 10 --header "$(omarchy_text "Timezone")") && status=0 || status=$?
   fi
   ((status == 0)) || return $status
 

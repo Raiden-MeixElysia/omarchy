@@ -585,8 +585,8 @@ Item {
     limit: 5
     inlineResults: false
     loading: root.jumpOptions.length === 0
-    buttonText: "Jump to a city"
-    loadingText: "Loading cities\u2026"
+    buttonText: I18n.tr("Jump to a city")
+    loadingText: I18n.tr("Loading cities…")
     offsetLabel: function(zoneId) { return Model.utcOffsetLabel(root.offsets[zoneId]) }
     foreground: root.foreground
     dim: root.dim

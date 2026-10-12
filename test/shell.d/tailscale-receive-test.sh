@@ -28,6 +28,7 @@ printf '%s\n' "\$*" >>"$WORKDIR/notifications"
 SH
 
 chmod +x "$WORKDIR/bin/"*
+ln -s "$ROOT/bin/omarchy-text" "$WORKDIR/bin/omarchy-text"
 
 receive() {
   local expected="$1"

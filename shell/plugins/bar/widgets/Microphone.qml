@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
+import qs.Commons
 import qs.Ui
 import qs.Commons
 
@@ -57,7 +58,7 @@ BarWidget {
     bar: root.bar
     text: root.muted ? "󰍭" : "󰍬"
     active: root.inUse
-    tooltipText: root.muted ? "Microphone muted" : (root.inUse ? "Microphone in use" : "Microphone live")
+    tooltipText: root.muted ? I18n.tr("Microphone muted") : (root.inUse ? I18n.tr("Microphone in use") : I18n.tr("Microphone live"))
     onPressed: function(b) {
       if (b === Qt.MiddleButton) root.bar.run("omarchy-shell shell toggle omarchy.audio")
       else root.toggleMute()

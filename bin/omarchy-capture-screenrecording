@@ -86,7 +86,7 @@ esac
 # --status only answers whether our recording runs, for the bar and the menu, so
 # it needs no recordings directory and never notifies.
 if [[ $STATUS != "true" && ! -d $OUTPUT_DIR ]]; then
-  omarchy-notification-send -u critical -t 3000 "Screen recording directory does not exist: $OUTPUT_DIR"
+  omarchy-notification-send -u critical -t 3000 "$(omarchy-text "Screen recording directory does not exist: %1" "$OUTPUT_DIR")"
   exit 1
 fi
 
@@ -97,7 +97,7 @@ start_webcam_overlay() {
   if [[ -z $WEBCAM_DEVICE ]]; then
     WEBCAM_DEVICE=$(omarchy-capture-webcam-list | sed -n '1s/[[:space:]].*//p')
     if [[ -z $WEBCAM_DEVICE ]]; then
-      omarchy-notification-send -u critical -t 3000 "No webcam devices found"
+      omarchy-notification-send -u critical -t 3000 "$(omarchy-text "No webcam devices found")"
       return 1
     fi
   fi
@@ -235,7 +235,9 @@ wf_audio_device() {
 }
 
 wf_audio_unavailable() {
-  omarchy-notification-send -u critical -t 5000 "Recording without $1 audio" "The $1 audio could not be added to this recording." >/dev/null 2>&1
+  local audio
+  audio=$(omarchy-text "$1")
+  omarchy-notification-send -u critical -t 5000 "$(omarchy-text "Recording without %1 audio" "$audio")" "$(omarchy-text "The %1 audio could not be added to this recording." "$audio")" >/dev/null 2>&1
 }
 
 wf_audio_cleanup() {
@@ -424,7 +426,7 @@ stop_screenrecording() {
 
   if omarchy-capture-screenrecording-process "${RECORDER[@]}"; then
     omarchy-capture-screenrecording-process "${RECORDER[@]}" --signal KILL
-    omarchy-notification-send -u critical -t 5000 "Screen recording error" "Recording process had to be force-killed. Video may be corrupted."
+    omarchy-notification-send -u critical -t 5000 "$(omarchy-text "Screen recording error")" "$(omarchy-text "Recording process had to be force-killed. Video may be corrupted.")"
   else
     finalize_recording
     local filename=$(cat "$RECORDING_FILE" 2>/dev/null)
@@ -434,7 +436,7 @@ stop_screenrecording() {
     # Generate a preview thumbnail from the first frame
     ffmpeg -y -i "$filename" -ss 00:00:00.1 -vframes 1 -q:v 2 "$preview" -loglevel quiet 2>/dev/null
 
-    omarchy-notification-send "Screen recording saved" "Open with Super + Alt + , (or click this)" \
+    omarchy-notification-send "$(omarchy-text "Screen recording saved")" "$(omarchy-text "Open with Super + Alt + , (or click this)")" \
       -t 10000 --image "${preview:-$filename}" \
       --exec mpv -- "$filename"
 

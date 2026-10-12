@@ -7,7 +7,7 @@
 if [[ ${1:-} == "--inhibited" ]]; then
   # Close windows in the background so they cannot delay power-off.
   (
-    omarchy-osd -i shutdown -m "Shutting down" -d 5000
+    omarchy-osd -i shutdown -m "$(omarchy-text "Shutting down")" -d 5000
     omarchy-state clear re*-required
     omarchy-hyprland-window-close-all
   ) &
@@ -21,7 +21,7 @@ elif [[ ${1:-} == "--inhibit" ]]; then
     --who=Omarchy --why="Shutdown in progress" --mode=block \
     "$0" --inhibited || {
     status=$?
-    omarchy-notification-send -u critical "Shutdown failed" "Could not complete shutdown. Please try again."
+    omarchy-notification-send -u critical "$(omarchy-text "Shutdown failed")" "$(omarchy-text "Could not complete shutdown. Please try again.")"
     exit "$status"
   }
 else

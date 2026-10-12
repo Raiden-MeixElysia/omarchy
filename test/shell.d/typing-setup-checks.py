@@ -74,7 +74,8 @@ class TypingSetupTest(unittest.TestCase):
 
   def test_an_uninstalled_engine_names_its_package_without_restarting(self):
     absent = subprocess.CompletedProcess([], 1)
-    with patch.object(typing.setup, "live_group", return_value=("Default", "us", [["keyboard-us", ""]])), patch.object(typing.setup, "available_methods", return_value=[]), patch.object(typing.subprocess, "run", return_value=absent), patch.object(typing.setup, "run") as run, patch.object(typing, "set_inputs") as save:
+    english = lambda text, *args: text.replace("%1", str(args[0]) if args else "").replace("%2", str(args[1]) if len(args) > 1 else "")
+    with patch.object(typing.setup, "live_group", return_value=("Default", "us", [["keyboard-us", ""]])), patch.object(typing.setup, "available_methods", return_value=[]), patch.object(typing.subprocess, "run", return_value=absent), patch.object(typing, "text", side_effect=english), patch.object(typing.setup, "run") as run, patch.object(typing, "set_inputs") as save:
       with self.assertRaisesRegex(RuntimeError, "Install fcitx5-mozc to use Japanese"):
         typing.save_inputs(["mozc"])
     run.assert_not_called()

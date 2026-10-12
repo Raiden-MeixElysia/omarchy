@@ -41,6 +41,7 @@ echo "notify $*" >>"$TMP/notes"
 echo "noise on stdout"
 SH
 chmod +x "$tmp/bin"/*
+ln -s "$ROOT/bin/omarchy-text" "$tmp/bin/omarchy-text"
 
 device() {
   rm -f "$tmp/calls" "$tmp/notes" "$tmp/next" "$tmp/modules"

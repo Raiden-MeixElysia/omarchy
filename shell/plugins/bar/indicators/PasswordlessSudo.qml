@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import qs.Commons
 import qs.Commons as Commons
@@ -13,8 +14,8 @@ BarIndicator {
   active: granted
   activeText: "󰟵"
   inactiveText: "󰟵"
-  activeTooltipText: "Disable Passwordless Sudo"
-  inactiveTooltipText: "Passwordless Sudo"
+  activeTooltipText: I18n.tr("Disable Passwordless Sudo")
+  inactiveTooltipText: I18n.tr("Passwordless Sudo")
   useActiveColor: true
   activeColor: Commons.Color.urgent
 
@@ -54,7 +55,7 @@ BarIndicator {
     command: ["omarchy-sudo-passwordless", "--disable"]
     onExited: function(exitCode, exitStatus) {
       if ((exitCode !== 0 || exitStatus !== 0) && root.bar)
-        root.bar.run('omarchy-notification-send "Could not disable passwordless sudo" "Check the sudo configuration and try again."')
+        Quickshell.execDetached([Quickshell.env("OMARCHY_PATH") + "/bin/omarchy-notification-send", I18n.tr("Could not disable passwordless sudo"), I18n.tr("Check the sudo configuration and try again.")])
       if (root.indicatorHost) root.indicatorHost.refresh()
       else root.refresh()
     }

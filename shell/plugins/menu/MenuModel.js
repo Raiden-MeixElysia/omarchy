@@ -58,7 +58,9 @@ function parseMenuJsonc(raw) {
   for (var id in source) {
     var entry = source[id]
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) continue
-    out.push(normalizeItem(id, entry))
+    var item = normalizeItem(id, entry)
+    item.declared = Object.keys(entry)
+    out.push(item)
   }
   return out
 }
@@ -74,11 +76,24 @@ function mergeMenuSources(defaultItems, userItems) {
       var entry = src[i]
       if (!entry || !entry.id) continue
       if (!nextItems[entry.id]) nextOrder.push(entry.id)
-      var prior = nextItems[entry.id] || {}
+      var prior = nextItems[entry.id]
       var merged = {}
-      for (var k in prior) merged[k] = prior[k]
-      for (var k2 in entry) merged[k2] = entry[k2]
+      // An override replaces only the fields its file declared.
+      if (prior && entry.declared) {
+        for (var k in prior) merged[k] = prior[k]
+        for (var d = 0; d < entry.declared.length; d++) {
+          var key = entry.declared[d]
+          if (key in entry) merged[key] = entry[key]
+        }
+        if (entry.declared.indexOf("action") >= 0 || entry.declared.indexOf("target") >= 0)
+          merged.kind = merged.action ? "action" : (merged.target ? "link" : "menu")
+      } else {
+        prior = prior || {}
+        for (var k1 in prior) merged[k1] = prior[k1]
+        for (var k2 in entry) merged[k2] = entry[k2]
+      }
       merged.id = entry.id
+      delete merged.declared
       nextItems[entry.id] = merged
     }
   }
@@ -406,7 +421,8 @@ var GUARD_READERS = [
   "omarchy-dns",
   "omarchy-hyprland-corners",
   "omarchy-hyprland-window-transparency",
-  "omarchy-hyprland-workspace-layout-default"
+  "omarchy-hyprland-workspace-layout-default",
+  "omarchy-language"
 ]
 
 // Package and command presence account for most of what the guards ask, and

@@ -53,14 +53,17 @@ source "$ROOT/install/provisioning/setup-form.sh"
 
 notice() { printf '%s\n' "$1" >>"$NOTICES"; }
 
+language=${FORM_LANGUAGE:-en}
+
 if [[ -n ${TAKEN_USERS:-} ]]; then
   omarchy_username_taken() { [[ " $TAKEN_USERS " == *" $1 "* ]]; }
 fi
 
 trap 'if [[ ${FUNCNAME[0]:-} == "$PROMPT_FN" ]]; then printf "returned\n" >>"$MARKER"; fi' RETURN
 
-"$PROMPT_FN"
+"$PROMPT_FN" ${PROMPT_ARG:+"$PROMPT_ARG"}
 
+printf 'language=%s\n' "${language:-}"
 printf 'keyboard=%s\n' "${keyboard:-}"
 printf 'keyboard_label=%s\n' "${keyboard_label:-}"
 printf 'keyboard_input_method=%s\n' "${keyboard_input_method:-}"
@@ -125,6 +128,37 @@ source "$ROOT/install/provisioning/setup-form.sh"
   fail "English (US) leads the keyboard layouts so gum choose opens on the default"
 pass "the form publishes the 0/1/130 status contract and leads with English (US)"
 
+# Language
+
+run_prompt omarchy_prompt_language "0:Chinese"
+assert_status 0 "language prompt succeeds"
+[[ $(field language) == "zh" ]] || fail "language prompt stores Chinese as zh"
+[[ $(<"$tmp_dir/stdin.1") == $'English\nChinese' ]] || fail "language prompt offers English then Chinese"
+grep -qxF -- 'choose --selected English --header Select language' "$GUM_ARGS" || fail "language prompt preselects English on a fresh form"
+FORM_LANGUAGE=zh run_prompt omarchy_prompt_language "0:English"
+[[ $(field language) == "en" ]] || fail "language prompt stores English as en"
+grep -qxF -- 'choose --selected Chinese --header Select language' "$GUM_ARGS" || fail "language prompt preselects the language chosen on an earlier visit"
+pass "language prompt maps English and Chinese and preselects the current language"
+
+run_prompt omarchy_prompt_language "1:"
+assert_status "$OMARCHY_FORM_BACK" "language prompt reports Esc as back"
+assert_returned "language prompt survives Esc under set -e"
+
+run_prompt omarchy_prompt_language "130:"
+assert_status "$OMARCHY_FORM_SIGNAL" "language prompt reports Ctrl+C as the caller's signal"
+assert_returned "language prompt survives Ctrl+C under set -e"
+pass "language prompt propagates Esc and Ctrl+C without dying under set -e"
+
+OMARCHY_CJK_CONSOLE=1 run_prompt omarchy_prompt_language "0:简体中文 Chinese"
+assert_status 0 "language prompt succeeds in a CJK console"
+[[ $(field language) == "zh" ]] || fail "language prompt stores 简体中文 as zh"
+[[ $(<"$tmp_dir/stdin.1") == $'English\n简体中文 Chinese' ]] || fail "a CJK console offers the Chinese name"
+grep -qxF -- 'choose --selected English --header Select language · 选择语言' "$GUM_ARGS" || fail "a CJK console asks in both languages"
+OMARCHY_CJK_CONSOLE=1 FORM_LANGUAGE=zh run_prompt omarchy_prompt_language "0:English"
+[[ $(field language) == "en" ]] || fail "language prompt stores English as en in a CJK console"
+grep -qxF -- 'choose --selected 简体中文 Chinese --header Select language · 选择语言' "$GUM_ARGS" || fail "a CJK console preselects Chinese by its shown name"
+pass "a CJK console names Chinese in Chinese and maps it back to zh"
+
 # Keyboard
 
 run_prompt omarchy_prompt_keyboard "0:German"
@@ -134,6 +168,11 @@ assert_status 0 "keyboard prompt succeeds"
 [[ $(head -n 1 "$tmp_dir/stdin.1") == "English (US)" ]] || fail "keyboard prompt offers English (US) first"
 grep -qF -- '--selected English (US)' "$GUM_ARGS" || fail "keyboard prompt preselects English (US)"
 pass "keyboard prompt maps the chosen label to its keymap"
+
+PROMPT_ARG="Chinese (Simplified, Pinyin)" run_prompt omarchy_prompt_keyboard "0:Chinese (Simplified, Pinyin)"
+grep -qF -- '--selected Chinese (Simplified\, Pinyin)' "$GUM_ARGS" && [[ $(field keyboard_input_method) == "pinyin" ]] ||
+  fail "keyboard prompt preselects the layout its caller names, escaping the comma gum splits --selected on"
+pass "keyboard prompt preselects the layout its caller names"
 
 for selection in 'Japanese|jp106|mozc|' 'Japanese (US keyboard)|us|mozc|' 'Korean|us|hangul|kr' 'Lao|us|none|la' 'Chinese (Simplified, Pinyin)|us|pinyin|' 'Chinese (Traditional, Zhuyin)|us|chewing|'; do
   IFS='|' read -r label keymap method layout <<< "$selection"
@@ -223,6 +262,21 @@ run_prompt omarchy_prompt_hostname "1:"
 assert_status "$OMARCHY_FORM_BACK" "hostname prompt reports Esc as back"
 assert_returned "hostname prompt survives Esc under set -e"
 pass "hostname prompt propagates Esc without dying under set -e"
+
+# Chinese text
+
+OMARCHY_INSTALL_LANG=zh run_prompt omarchy_prompt_username "0:Bad Name" "0:dhh"
+assert_status 0 "username prompt succeeds in Chinese"
+grep -qF -- '--prompt 用户名> ' "$GUM_ARGS" || fail "OMARCHY_INSTALL_LANG=zh asks for the username in Chinese"
+assert_notices "OMARCHY_INSTALL_LANG=zh explains a bad username in Chinese" "用户名只能用字母和数字，不含空格"
+run_prompt omarchy_prompt_username "0:dhh"
+grep -qF -- '--prompt Username> ' "$GUM_ARGS" || fail "the form stays English without OMARCHY_INSTALL_LANG"
+mapfile -t texts < <(grep -o 'omarchy_text "[^"]*"' "$ROOT/install/provisioning/setup-form.sh" | sed 's/^omarchy_text "//; s/"$//')
+((${#texts[@]} > 15)) || fail "the form routes its text through omarchy_text"
+for text in "${texts[@]}"; do
+  [[ -n ${OMARCHY_ZH[$text]:-} ]] || fail "every form text has a Chinese entry" "missing: $text"
+done
+pass "OMARCHY_INSTALL_LANG=zh puts every form text in Chinese"
 
 # Timezone
 

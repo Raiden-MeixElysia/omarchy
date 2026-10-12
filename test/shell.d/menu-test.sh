@@ -62,9 +62,10 @@ assertDeepEqual(
     aliases: ['theme'],
     when: '',
     checked: '',
-    disabled: ''
+    disabled: '',
+    declared: ['label', 'aliases', 'description', 'action']
   },
-  'menu normalizes parsed items'
+  'menu normalizes parsed items and records what the file declared'
 )
 
 const user = [
@@ -75,6 +76,16 @@ const merged = menu.mergeMenuSources(parsed, user)
 assertEqual(merged.items['style.theme'].label, 'Theme picker', 'menu user entries override default entries')
 assertEqual(merged.items['style.theme'].order, 2, 'menu preserves original order on override')
 assert(merged.items.root, 'menu injects root when merging sources')
+
+const retitled = menu.mergeMenuSources(
+  menu.parseMenuJsonc('{"apps": {"icon":"A","label":"Apps","provider":"apps"}, "apps.go": {"label":"Go","action":"run-go"}}'),
+  menu.parseMenuJsonc('{"apps": {"label":"应用"}, "apps.go": {"label":"出发"}}')
+)
+assertEqual(retitled.items['apps'].provider, 'apps', 'menu keeps the provider when a user entry only retitles')
+assertEqual(retitled.items['apps'].icon, 'A', 'menu keeps the icon when a user entry only retitles')
+assertEqual(retitled.items['apps.go'].action, 'run-go', 'menu keeps the action when a user entry only retitles')
+assertEqual(retitled.items['apps.go'].kind, 'action', 'menu keeps the kind when a user entry only retitles')
+assertEqual(retitled.items['apps.go'].label, '出发', 'menu applies the user retitle')
 
 assertEqual(menu.slugify('Power Saver!'), 'power-saver', 'menu slugifies provider rows')
 assertEqual(menu.pathFor(merged.items, 'style.theme'), 'Style › Theme picker', 'menu builds item paths')
@@ -284,6 +295,15 @@ assert(
   'menu always exposes every supported browser, terminal, and editor under Defaults'
 )
 assert(!defaultById['install.ai.crush'], 'menu removes Crush from Install > AI')
+const languageEntries = defaultItems.filter(item => item.parent === 'setup.language')
+assert(
+  languageEntries.map(item => item.id).join('\0') === 'setup.language.en\0setup.language.zh'
+    && defaultById['setup.language.en'].checked.includes('== \"en_US.UTF-8\"')
+    && defaultById['setup.language.zh'].checked.includes('== \"zh_CN.UTF-8\"')
+    && defaultById['setup.language.en'].action.includes('omarchy-language en')
+    && defaultById['setup.language.zh'].action.includes('omarchy-language zh'),
+  'menu offers English and Simplified Chinese under Setup > Language'
+)
 // Software you already have keeps its place in Install, dimmed rather than
 // dropped, so the list reads as a catalog of what Omarchy can install.
 // Chromium Account is the sole Install row with anything left to hide for. The

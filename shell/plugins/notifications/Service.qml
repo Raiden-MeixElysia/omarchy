@@ -725,7 +725,7 @@ Item {
         originalId: -1,
         app: "omarchy-action",
         appIcon: "",
-        summary: "No recent notifications",
+        summary: I18n.tr("No recent notifications"),
         body: "",
         image: "",
         glyph: "󰂚",

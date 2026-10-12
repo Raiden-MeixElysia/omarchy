@@ -24,6 +24,10 @@ Run `omarchy-restart-shell` after making changes to QML files.
 - Panel / overlay / menu plugins must expose `open(payloadJson)` and
   `close()` lifecycle methods for `shell summon` and `shell hide`.
 
+## Text
+
+Wrap every user-visible string in `I18n.tr()` (`import qs.Commons`) and add its Chinese to `shell/Commons/I18nZh.js`; plain JS models that Node tests load stay English, and their text is wrapped where QML shows it.
+
 ## IPC
 
 - `bin/omarchy-shell` is the canonical IPC entry point. It forwards to

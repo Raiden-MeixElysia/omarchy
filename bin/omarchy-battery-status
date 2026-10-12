@@ -150,9 +150,9 @@ if [[ $charge_holding == "true" ]]; then
     threshold_label="${threshold_end}%"
   fi
 
-  echo "Battery ${percentage}%  ·  Holding at ${threshold_label}  ·  ${power_rate}W / ${capacity}Wh"
+  omarchy-text "Battery %1%  ·  Holding at %2  ·  %3W / %4Wh" "$percentage" "$threshold_label" "$power_rate" "$capacity"
 elif [[ $state == "charging" ]]; then
-  echo "Battery ${percentage}%  ·  ${time_remaining} to full  ·   ${power_rate}W / ${capacity}Wh"
+  omarchy-text "Battery %1%  ·  %2 to full  ·   %3W / %4Wh" "$percentage" "$time_remaining" "$power_rate" "$capacity"
 else
-  echo "Battery ${percentage}%  ·  ${time_remaining} left  ·   ${power_rate}W / ${capacity}Wh"
+  omarchy-text "Battery %1%  ·  %2 left  ·   %3W / %4Wh" "$percentage" "$time_remaining" "$power_rate" "$capacity"
 fi

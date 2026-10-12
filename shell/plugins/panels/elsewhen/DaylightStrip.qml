@@ -66,8 +66,8 @@ Item {
     var out = []
     var up = Sun.eventMark(sun.riseMinutes)
     var down = Sun.eventMark(sun.setMinutes)
-    if (up !== null) out.push({ x: up, minutes: sun.riseMinutes, rising: true, name: "Sunrise" })
-    if (down !== null) out.push({ x: down, minutes: sun.setMinutes, rising: false, name: "Sunset" })
+    if (up !== null) out.push({ x: up, minutes: sun.riseMinutes, rising: true, name: I18n.tr("Sunrise") })
+    if (down !== null) out.push({ x: down, minutes: sun.setMinutes, rising: false, name: I18n.tr("Sunset") })
     return out
   }
 

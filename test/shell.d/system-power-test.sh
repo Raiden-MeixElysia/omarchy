@@ -74,6 +74,7 @@ esac
 SH
 done
 chmod +x "$mock_bin"/*
+ln -s "$ROOT/bin/omarchy-text" "$mock_bin/omarchy-text"
 
 run_power_command() {
   local action="$1"

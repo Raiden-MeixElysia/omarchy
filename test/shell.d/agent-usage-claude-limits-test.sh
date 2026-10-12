@@ -5,6 +5,12 @@ source "$(dirname "$0")/base-test.sh"
 require_command jq
 require_command python3
 
+# The collector words its diagnostics through omarchy-text.
+text_bin=$(mktemp -d)
+trap 'rm -rf "$text_bin"' EXIT
+ln -s "$ROOT/bin/omarchy-text" "$text_bin/omarchy-text"
+export PATH="$text_bin:$PATH"
+
 # probe_limits reaches Anthropic, so the reader that interprets its answer is
 # exercised on its own: the collector loads as a module, and a recorded payload
 # stands in for the response.
@@ -112,7 +118,7 @@ pass "Claude collector keeps Max multipliers and plain plan names"
 # is still good. Drive collect_limits over a planted cache with the network
 # unreachable, so nothing but the credential state decides the answer.
 CACHE_HOME=$(mktemp -d)
-trap 'rm -rf "$CACHE_HOME"' EXIT
+trap 'rm -rf "$CACHE_HOME" "$text_bin"' EXIT
 
 collect_limits() {
   COLLECTOR="$ROOT/bin/omarchy-agent-usage-claude" TOKEN="$1" EXPIRES_AT="$2" \
@@ -320,10 +326,12 @@ pass "Claude collector caches a successful probe"
 # The panel reads a window out of a label, and that guess cannot survive a
 # model name — "Opus 5 (1M context)" parses as a one-minute window. A collector
 # that states the title outright is taken at its word.
-run_node_test <<'JS'
+run_node_test <<'JS' || exit 1
 const fs = require('fs')
 const source = fs.readFileSync(root + '/shell/plugins/agents/Panel.qml', 'utf8')
 const panelRoot = { nowMs: Date.now() }
+// The panel's text goes through I18n; English here, with its %1 arguments filled.
+const I18n = { tr: (text, ...args) => text.replace(/%(\d)/g, (m, n) => (n > 0 && n <= args.length ? String(args[n - 1]) : m)) }
 const start = source.indexOf('function windowIsLong')
 const end = source.indexOf('// The window that decides')
 assert(start > 0 && end > start, 'agents panel exposes its limit-window helpers')

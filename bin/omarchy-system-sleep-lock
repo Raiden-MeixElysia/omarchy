@@ -98,8 +98,8 @@ report_unsecured() {
     "$1" >&2
 
   omarchy-notification-send -u critical -g 󰌾 \
-    "Screen did not lock before suspend" \
-    "The session was left unlocked ($1)." >/dev/null 2>&1 || true
+    "$(omarchy-text "Screen did not lock before suspend")" \
+    "$(omarchy-text "The session was left unlocked (%1)." "$1")" >/dev/null 2>&1 || true
 
   exit 1
 }
