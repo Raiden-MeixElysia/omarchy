@@ -81,7 +81,7 @@ omarchy, each a fork branch:
 - [x] T29 Drop `pin_local_packages` and the pin list (omarchy-iso)
 - [x] T30 The CJK console skips the second language screen; the summary's keyboard row shows the chosen layout, not its keymap (omarchy-iso)
 - [x] T31 The CJK console fills the screen and the summary keeps the logo in view (omarchy-iso)
-- [ ] T32 Rebuild omarchy as PR branches on current upstream: CJK fontconfig, language and menus, shell text, cn developer mirrors (on #13690), Setup > Region and China Apps; `omarchycn` becomes their merge
+- [x] T32 Rebuild omarchy as PR branches on current upstream: CJK fontconfig, language and menus, shell text, cn developer mirrors (on #13690), Setup > Region and China Apps; `omarchycn` becomes their merge
 - [ ] T33 Rebuild omarchy-iso as one PR branch on iso #241 and current upstream; `omarchycn` becomes it; omarchy-pkgs follows upstream master
 - [ ] T34 Build the local-source ISO and test in QEMU: Chinese offline, English
 - [ ] T35 Acceptance checklist for T28–T34
