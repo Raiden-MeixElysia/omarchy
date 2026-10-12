@@ -89,6 +89,14 @@ omarchy `omarchycn` merges them onto `quattro` and adds what no PR can carry yet
 - [ ] T35 Acceptance checklist for T28–T34
 - [ ] T36 Open the PRs one at a time from Raiden-MeixElysia
 
+## T34 evidence (2026-10-12)
+
+ISO `release/omarchy-2026.10.12-x86_64-local.iso` from omarchy `omarchycn`, omarchy-iso `omarchycn` (c407101), omarchy-pkgs upstream master (d47199f2). Screenshots in `~/omarchy-vm/shots/`.
+
+- Chinese, offline (`OFFLINE=on`): the VT language screen, then cage + foot opens straight on the keyboard screen with Pinyin preselected and no strip (04-keyboard); the summary keeps the whole logo and shows `键盘 Chinese (Simplified, Pinyin)` (14-summary); installed in 4m 0s (18-progress). First boot: Chinese desktop and notifications (21-desktop); `LANG=zh_CN.UTF-8`, region `cn`, `mirror.omarchy.cn` first, `[archlinuxcn]`, no `IgnorePkg` or pin hooks, developer mirror links and `NPM_CONFIG_REGISTRY`/`GOPROXY` in the session, Fcitx5 profile with Pinyin (30-state); `Super + I`, `nihao`, Space typed 你好 (31-pinyin); Setup shows 语言 and 地区 (34-setup); `fc-match` gives SC for untagged Han under zh_CN and TC, HK, JP, KR for tagged text, Liberation Sans for tagged Latin (36-fonts).
+- Runtime, online: `omarchy region global` → Global, no marker, `.org` mirror, no ArchLinuxCN, links gone, `LANG` kept, Chinese logout prompt (42, 43); `omarchy language en` → `en_US.UTF-8`, English logout prompt (44); `omarchy region cn` → China, `.cn` first, ArchLinuxCN, links back, `LANG` kept (45, 46); `omarchy language zh` → `zh_CN.UTF-8` (47). The `.cn` edge mirror lagged `.org` by one sqlite release, which the cn refresh downgraded.
+- English, harness: install and first boot pass; four acceptance failures, all upstream: Mozc Qt, weather OCR, `omarchy-bore` vs `linux-omarchy`, and the menu test still walking Style > Menu Bar, which upstream moved to Trigger > Appearance.
+
 ## Acceptance checklist
 
 Evidence comes from the T26 runs of `omarchy-iso/release/omarchy-2026.10.09-x86_64-local.iso` (omarchy fcd681c0, omarchy-iso 30f63b6, omarchy-pkgs a4cc3234): run A in host QEMU with the guest cut off from the network during install, run B in the ISO test harness.
