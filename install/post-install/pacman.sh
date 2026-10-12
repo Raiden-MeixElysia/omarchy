@@ -22,7 +22,7 @@ fi
 channel=${OMARCHY_MIRROR:-}
 [[ -n $channel && -f $templates/pacman-$channel.conf ]] || channel=$(omarchy_pacman_default_channel "$platform")
 # Regions render x86 pacman only (omarchy #13690).
-if [[ $platform == x86 ]]; then
+if [[ $platform == x86 && -e /etc/omarchy/region ]]; then
   "$OMARCHY_PATH/bin/omarchy-apply-pacman" "$channel"
 else
   cp -f "$templates/pacman-$channel.conf" /etc/pacman.conf
