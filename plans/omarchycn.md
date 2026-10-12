@@ -85,9 +85,23 @@ omarchy `omarchycn` merges them onto `quattro` and adds what no PR can carry yet
 - [x] T31 The CJK console fills the screen and the summary keeps the logo in view (omarchy-iso)
 - [x] T32 Rebuild omarchy as PR branches on current upstream: CJK fontconfig, language and menus, shell text, cn developer mirrors (on #13690), Setup > Region and China Apps; `omarchycn` becomes their merge
 - [x] T33 Rebuild omarchy-iso as one PR branch on iso #241 and current upstream; `omarchycn` becomes it; omarchy-pkgs follows upstream master
-- [ ] T34 Build the local-source ISO and test in QEMU: Chinese offline, English
+- [x] T34 Build the local-source ISO and test in QEMU: Chinese offline, English
 - [ ] T35 Acceptance checklist for T28–T34
 - [ ] T36 Open the PRs one at a time from Raiden-MeixElysia
+
+## Acceptance checklist for T28–T34 (maintainers' ISO test, 2026-10-11)
+
+| # | Request | Result | Evidence |
+|---|---|---|---|
+| 1 | Drop `pin_local_packages` and its hooks | Pass | omarchy-iso 2a589e9; installed `pacman.conf` has no `IgnorePkg`, `/etc/pacman.d/hooks` holds only upstream hooks (30-state). |
+| 2 | Drop `omarchy-setup-claude-api` and the Dim/Kimi roster and migration | Pass | omarchy f2af41bb; nothing of them in any PR branch; `omarchy region global` touches no Claude settings. |
+| 3 | No second language screen in the CJK console | Pass | omarchy-iso 2c523af; cage + foot opens on the keyboard screen (04-keyboard). |
+| 4 | No black strip; logo whole on the summary; keyboard row shows Pinyin | Pass | omarchy-iso 411acd6 (`[csd] preferred=none`, `line-height=22px`) and 2c523af (`keyboard_label`); 04-keyboard, 14-summary. |
+| 5 | PRs carry only our changes, stacked on #13690; ISO bundles David's #14433 | Pass | T32/T33 branches; #14433 and iso #237 come from upstream `quattro`; region branches stack on #13690, the ISO branch on iso #241. |
+| - | Rebuilt ISO, Chinese offline and English | Pass | T34 evidence below. |
+| - | Automated tests | No new failures | Per-branch shell tests pass on their bases; the integration suite fails only where upstream fails, plus `pacman-templates-test` until #13690 rebases; ISO unit tests fail only `test_keyboard` (no `localectl`), as upstream. |
+
+Open: `pacman-templates-test` and the ARM guard wait on #13690's rebase; the Chinese wording for Region and China Apps waits on the language and region PRs; the upstream menu acceptance test still walks Style > Menu Bar.
 
 ## T34 evidence (2026-10-12)
 
