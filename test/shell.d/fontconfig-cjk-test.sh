@@ -4,6 +4,8 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
+unset FONTCONFIG_FILE FONTCONFIG_PATH
+
 if ! command -v fc-match >/dev/null || [[ $(fc-list : file) != *NotoSansCJK-Regular.ttc* ]]; then
   skip "fontconfig CJK variants need fc-match and noto-fonts-cjk"
   exit 0
@@ -52,7 +54,12 @@ for line in sys.stdin:
   pattern = fc.FcPatternCreate()
   fc.FcPatternAddString(pattern, b"family", family.encode())
   if lang != "-":
-    fc.FcPatternAddString(pattern, b"lang", lang.encode())
+    for tag in lang.split("|"):
+      fc.FcPatternAddString(pattern, b"lang", tag.encode())
+  if char == "langs":
+    fc.FcConfigSubstitute(None, pattern, 0)
+    print(fc.FcPatternFormat(pattern, b"%{lang}").decode())
+    continue
   if char == "families":
     fc.FcConfigSubstitute(None, pattern, 0)
     print(fc.FcPatternFormat(pattern, b"%{family}").decode())
@@ -70,14 +77,18 @@ PY
 # resolve <locale> <string|langset> reads "family lang char" lines
 resolve() {
   if [[ $2 == "string" ]]; then
-    LANG=$1 python3 "$test_tmp/string-lang.py"
+    env -u LC_ALL -u LC_CTYPE -u FC_LANG LANG=$1 python3 "$test_tmp/string-lang.py"
   else
     local family lang char query
     while read -r family lang char; do
       query=$family
       [[ $lang == "-" ]] || query+=":lang=$lang"
+      if [[ $char == "langs" ]]; then
+        env -u LC_ALL -u LC_CTYPE -u FC_LANG LANG=$1 fc-pattern -c -f '%{lang}\n' "$query"
+        continue
+      fi
       [[ $char == "-" ]] || query+=":charset=$char"
-      LANG=$1 fc-match -f '%{family[0]}\n' "$query"
+      env -u LC_ALL -u LC_CTYPE -u FC_LANG LANG=$1 fc-match -f '%{family[0]}\n' "$query"
     done
   fi
 }
@@ -104,7 +115,16 @@ for generic in sans-serif serif monospace; do
   queries+=("$generic - -") expected+=("${latin[$generic]}")
 done
 
-for locale in C.UTF-8 zh_CN.UTF-8; do
+locales=(C.UTF-8)
+chinese_locale=false
+if locale -a | grep -Eqi '^zh_CN\.(utf-?8)$'; then
+  locales+=(zh_CN.UTF-8)
+  chinese_locale=true
+else
+  skip "locale-derived Han fallback needs the zh_CN.UTF-8 locale"
+fi
+
+for locale in "${locales[@]}"; do
   for path in string langset; do
     mapfile -t actual < <(printf '%s\n' "${queries[@]}" | resolve "$locale" "$path")
     for i in "${!queries[@]}"; do
@@ -115,13 +135,15 @@ for locale in C.UTF-8 zh_CN.UTF-8; do
   pass "$locale: tagged CJK keeps Omarchy's Latin families and sets Han in the tag's variant"
 done
 
-for path in string langset; do
-  for generic in sans-serif serif monospace; do
-    actual=$(echo "$generic - 9aa8" | resolve zh_CN.UTF-8 "$path")
-    [[ $actual == "${cjk[$generic]} SC" ]] || fail "zh_CN $path: untagged Han in $generic is SC" "$actual"
+if $chinese_locale; then
+  for path in string langset; do
+    for generic in sans-serif serif monospace; do
+      actual=$(echo "$generic - 9aa8" | resolve zh_CN.UTF-8 "$path")
+      [[ $actual == "${cjk[$generic]} SC" ]] || fail "zh_CN $path: untagged Han in $generic is SC" "$actual"
+    done
   done
-done
-pass "a Chinese locale sets untagged Han in SC"
+  pass "a Chinese locale sets untagged Han in SC"
+fi
 
 untouched=$(echo "sans-serif en families" | resolve C.UTF-8 string)
 [[ $(echo "sans-serif ja families" | resolve C.UTF-8 string) != "$untouched" ]] ||
@@ -131,3 +153,34 @@ for tag in jam jav kok koi; do
   [[ $actual == "$untouched" ]] || fail "string lang=$tag is not taken for Japanese or Korean" "$actual"
 done
 pass "languages that only share a prefix with ja or ko get no CJK variant"
+
+for path in string langset; do
+  for tag in zh zh-sg zh-hant-hk yue-hans-cn; do
+    langs=$(echo "sans-serif $tag|ur langs" | resolve C.UTF-8 "$path")
+    [[ $langs == *ur* ]] || fail "$path: normalizing $tag preserves Urdu in the language request" "$langs"
+    actual=$(echo "sans-serif $tag|ur 067e" | resolve C.UTF-8 "$path")
+    [[ $actual == "Noto Nastaliq Urdu" ]] || fail "$path: $tag with Urdu keeps its Nastaliq fallback" "$actual"
+  done
+done
+pass "Chinese normalization preserves other requested languages and their fonts"
+
+for path in string langset; do
+  for tag in "${!variant[@]}"; do
+    actual=$(echo "sans-serif $tag|en 9aa8" | resolve C.UTF-8 "$path")
+    [[ $actual == "Noto Sans CJK ${variant[$tag]}" ]] || fail "$path: $tag with English keeps its CJK variant" "$actual"
+  done
+done
+pass "Chinese and CJK tags keep their variant in multi-language requests"
+
+if $chinese_locale; then
+  for path in string langset; do
+    for override in LC_ALL=C.UTF-8 LC_CTYPE=C.UTF-8 FC_LANG=ja; do
+      actual=$(echo "sans-serif - 9aa8" | (
+        export "$override"
+        resolve zh_CN.UTF-8 "$path"
+      ))
+      [[ $actual == "Noto Sans CJK SC" ]] || fail "$path: $override cannot override the test locale" "$actual"
+    done
+  done
+  pass "both font matching paths ignore inherited locale overrides"
+fi
